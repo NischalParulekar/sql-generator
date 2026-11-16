@@ -37,6 +37,11 @@ def test_types_are_inferred_per_column():
         (2, 8.0, "Bob", None),
         (None, 1200.0, "3", None),
     )
+    assert table.raw_rows == (
+        ("1", "9.5", "Ann", ""),
+        ("2", "8", "Bob", ""),
+        ("", "1,200", "3", ""),
+    )
 
 
 def test_one_non_numeric_cell_keeps_the_column_as_text():
@@ -68,3 +73,4 @@ def test_column_names_are_sql_safe_and_unique():
 def test_short_and_long_rows_are_squared_off():
     table = Table.from_strings("t1", ["a", "b"], [["1"], ["2", "x", "extra"]])
     assert table.rows == ((1, None), (2, "x"))
+    assert table.raw_rows == (("1", ""), ("2", "x"))
