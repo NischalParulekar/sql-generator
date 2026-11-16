@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from nlp_sql import generate_sql
+from tableqa.systems.rule_based.nlp_sql import generate_sql
 
 app = FastAPI()
 
