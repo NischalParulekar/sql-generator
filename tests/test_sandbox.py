@@ -117,3 +117,32 @@ def test_slow_query_times_out_and_sandbox_stays_usable(table):
 def test_empty_table(table):
     empty = Table.from_strings("empty", ["a", "b"], [])
     assert Sandbox(empty).run("SELECT COUNT(*) FROM t").rows == ((0,),)
+
+
+def test_rows_keep_their_order_types_and_nulls_when_loaded():
+    table = Table.from_strings(
+        "mixed",
+        ["Name", "Score", "Ratio", "Note"],
+        [["Ann", "10", "0.5", ""], ["Bob", "", "1.25", "late"], ["Cy", "7", "", 'it\'s "fine"']],
+    )
+    result = Sandbox(table).run("SELECT rowid, * FROM t ORDER BY rowid")
+    assert result.rows == (
+        (0, "Ann", 10, 0.5, None),
+        (1, "Bob", None, 1.25, "late"),
+        (2, "Cy", 7, None, 'it\'s "fine"'),
+    )
+
+
+def test_a_large_table_loads_quickly_and_in_order():
+    rows = [[f"ORD-{i:06d}", str(i % 97), f"Customer {i % 40}"] for i in range(100_000)]
+    table = Table.from_strings("big", ["Order ID", "Quantity", "Customer"], rows)
+    start = time.perf_counter()
+    sandbox = Sandbox(table)
+    assert time.perf_counter() - start < 10
+    assert sandbox.run("SELECT COUNT(*), SUM(quantity) FROM t").rows == (
+        (100_000, sum(i % 97 for i in range(100_000))),
+    )
+    assert sandbox.run("SELECT order_id FROM t WHERE rowid IN (0, 99999) ORDER BY rowid").rows == (
+        ("ORD-000000",),
+        ("ORD-099999",),
+    )
