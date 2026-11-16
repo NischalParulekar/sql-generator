@@ -23,6 +23,7 @@ class Table:
     columns: tuple[str, ...]  # unique SQL-safe names, same order as headers
     types: tuple[str, ...]  # DuckDB type per column: BIGINT, DOUBLE or VARCHAR
     rows: tuple[tuple, ...]  # typed cell values; None for an empty cell
+    raw_rows: tuple[tuple[str, ...], ...]  # the same cells as their original text
 
     @classmethod
     def from_strings(cls, id: str, headers: list[str], rows: list[list[str]]) -> "Table":
@@ -40,6 +41,7 @@ class Table:
             columns=tuple(_sql_names(headers)),
             types=tuple(types),
             rows=tuple(zip(*typed_columns)) if width else (),
+            raw_rows=tuple(tuple(row) for row in cells),
         )
 
 
