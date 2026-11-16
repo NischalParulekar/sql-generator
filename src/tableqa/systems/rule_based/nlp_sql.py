@@ -360,6 +360,9 @@ def generate_sql(prompt: str, schema: str = "") -> str:
 
     # Resolve table
     table = _find_table(p, tables) if tables else None
+    if table is None and len(tables) == 1:
+        # Single-table schema: the question is about that table even if it never names it.
+        table = tables[0]
     table_name = table.name if table else _infer_table_name(p)
 
     # Aggregation
