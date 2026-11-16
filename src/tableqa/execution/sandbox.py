@@ -65,8 +65,13 @@ class Sandbox:
         self._con = duckdb.connect(":memory:")
         self._con.execute(schema_ddl(table))
         if table.rows:
-            placeholders = ", ".join("?" * len(table.columns))
-            self._con.executemany(f"INSERT INTO {TABLE_NAME} VALUES ({placeholders})", table.rows)
+            # One list parameter per column, unnested side by side. Inserting row by row
+            # takes over a minute for 100,000 rows; this takes about a second.
+            columns = ", ".join(f"unnest(?::{dtype}[])" for dtype in table.types)
+            self._con.execute(
+                f"INSERT INTO {TABLE_NAME} SELECT {columns}",
+                [list(column) for column in zip(*table.rows)],
+            )
         self._con.execute(f"SET memory_limit = '{memory_limit}'")
         self._con.execute("SET enable_external_access = false")
         self._con.execute("SET lock_configuration = true")
