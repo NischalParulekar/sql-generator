@@ -1,6 +1,6 @@
 import pytest
 
-from tableqa.systems.tapas.logic import compute_answer, pack_rows
+from tableqa.systems.tapas.logic import ChunkResult, combine, compute_answer, pack_rows
 
 
 @pytest.mark.parametrize(
@@ -47,3 +47,51 @@ def test_pack_rows_covers_every_row_once_within_budget(costs, budget):
 )
 def test_compute_answer(operator, cells, expected):
     assert compute_answer(operator, cells) == expected
+
+
+# Operator probabilities are ordered (NONE, SUM, AVERAGE, COUNT).
+LOOKUP, COUNTING = (0.9, 0.0, 0.0, 0.1), (0.1, 0.0, 0.0, 0.9)
+
+
+def test_union_keeps_every_selected_cell_in_table_order():
+    results = [
+        ChunkResult({(12, 0): 0.8}, LOOKUP),
+        ChunkResult({(3, 0): 0.99, (1, 2): 0.6}, LOOKUP),
+    ]
+    assert combine(results, routed=False) == ("NONE", [(1, 2), (3, 0), (12, 0)])
+
+
+def test_routed_lookup_keeps_only_the_chunk_with_the_most_confident_cell():
+    results = [
+        ChunkResult({(0, 1): 0.7, (1, 1): 0.7}, LOOKUP),
+        ChunkResult({(20, 1): 0.95, (22, 1): 0.55}, LOOKUP),
+        ChunkResult({}, LOOKUP),
+    ]
+    assert combine(results, routed=True) == ("NONE", [(20, 1), (22, 1)])
+
+
+def test_routed_aggregation_still_uses_every_chunk():
+    results = [
+        ChunkResult({(0, 1): 0.7}, COUNTING),
+        ChunkResult({(20, 1): 0.95}, COUNTING),
+    ]
+    assert combine(results, routed=True) == ("COUNT", [(0, 1), (20, 1)])
+    assert combine(results, routed=True) == combine(results, routed=False)
+
+
+def test_operator_is_chosen_by_mean_probability_across_chunks():
+    results = [
+        ChunkResult({(0, 0): 0.9}, (0.6, 0.0, 0.0, 0.4)),
+        ChunkResult({(9, 0): 0.9}, (0.2, 0.0, 0.0, 0.8)),
+    ]
+    assert combine(results, routed=False)[0] == "COUNT"
+
+
+def test_single_chunk_is_the_same_under_both_rules():
+    results = [ChunkResult({(2, 1): 0.9, (4, 1): 0.8}, LOOKUP)]
+    assert combine(results, routed=True) == combine(results, routed=False)
+
+
+def test_routed_lookup_with_nothing_selected_anywhere_is_empty():
+    results = [ChunkResult({}, LOOKUP), ChunkResult({}, LOOKUP)]
+    assert combine(results, routed=True) == ("NONE", [])

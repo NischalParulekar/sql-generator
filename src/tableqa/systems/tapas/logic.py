@@ -1,8 +1,19 @@
-"""The parts of the TAPAS system that need no model: fitting rows and reading answers."""
+"""The parts of the TAPAS system that need no model: fitting rows, combining chunks and
+reading answers."""
+
+from dataclasses import dataclass
 
 from tableqa.table import parse_number
 
 OPERATORS = ("NONE", "SUM", "AVERAGE", "COUNT")  # index = TAPAS WTQ aggregation label id
+
+
+@dataclass(frozen=True)
+class ChunkResult:
+    """What TAPAS said about one chunk of the table."""
+
+    cells: dict[tuple[int, int], float]  # selected (row, column) of the whole table -> probability
+    operator_probs: tuple[float, ...]  # one probability per entry of OPERATORS
 
 
 def pack_rows(row_costs: list[int], budget: int) -> list[range]:
@@ -20,6 +31,28 @@ def pack_rows(row_costs: list[int], budget: int) -> list[range]:
     if row_costs:
         chunks.append(range(start, len(row_costs)))
     return chunks
+
+
+def combine(results: list[ChunkResult], routed: bool) -> tuple[str, list[tuple[int, int]]]:
+    """Merge per-chunk results into one operator and one list of selected cells.
+
+    The operator is the one with the highest mean probability across chunks.
+
+    Union (routed=False): the cells are everything any chunk selected.
+
+    Routed (routed=True): what the operator needs decides where cells come from. SUM,
+    AVERAGE and COUNT aggregate over rows, so they keep the union. NONE is a lookup,
+    whose answer normally sits in one place, so only the chunk containing the single
+    most confident cell is kept and the other chunks' selections are discarded.
+    """
+    mean_probs = [
+        sum(r.operator_probs[i] for r in results) / len(results) for i in range(len(OPERATORS))
+    ]
+    operator = OPERATORS[mean_probs.index(max(mean_probs))]
+    if routed and operator == "NONE":
+        best = max(results, key=lambda r: max(r.cells.values(), default=0.0))
+        return operator, sorted(best.cells)
+    return operator, sorted(cell for r in results for cell in r.cells)
 
 
 def compute_answer(operator: str, cells: list[str]) -> list[str]:
