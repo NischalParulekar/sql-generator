@@ -48,9 +48,7 @@ class TapasSystem:
 
     def answer(self, question: str, table: Table) -> Prediction:
         start = time.perf_counter()
-        chunks = self._chunks(question, table)
-        if self.name == "tapas":
-            chunks = chunks[:1]
+        chunks = self._chunks(question, table, first_only=self.name == "tapas")
         results, rows_dropped = [], len(table.raw_rows)
         for chunk in chunks:
             rows = table.raw_rows[chunk.start : chunk.stop]
@@ -105,8 +103,15 @@ class TapasSystem:
         """Tokens a cell occupies; an empty cell still takes one."""
         return max(1, len(self._tokenizer.tokenize(text)))
 
-    def _chunks(self, question: str, table: Table) -> list[range]:
+    def _chunks(self, question: str, table: Table, first_only: bool = False) -> list[range]:
         fixed = len(self._tokenizer.tokenize(question)) + 2  # [CLS] question [SEP]
         fixed += sum(self._cost(header) for header in table.headers)
-        row_costs = [sum(self._cost(cell) for cell in row) for row in table.raw_rows]
-        return pack_rows(row_costs, self._tokenizer.model_max_length - fixed)
+        budget = self._tokenizer.model_max_length - fixed
+        row_costs, used = [], 0
+        for row in table.raw_rows:
+            row_costs.append(sum(self._cost(cell) for cell in row))
+            used += row_costs[-1]
+            if first_only and used > budget:
+                break  # the first chunk is settled; no need to tokenize a huge table
+        chunks = pack_rows(row_costs, budget)
+        return chunks[:1] if first_only else chunks
