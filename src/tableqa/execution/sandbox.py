@@ -40,6 +40,10 @@ class QueryResult:
     rows: tuple[tuple, ...]
     truncated: bool  # True if the query produced more than max_rows rows
 
+    def first_column(self) -> list[str]:
+        """The result read as an answer: the non-NULL values of its first column."""
+        return [str(row[0]) for row in self.rows if row[0] is not None]
+
 
 def schema_ddl(table: Table) -> str:
     """The CREATE TABLE statement for a table as it exists inside the sandbox."""
