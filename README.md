@@ -23,33 +23,43 @@ WTQ **dev** subset: 500 questions sampled with seed 42 from `random-split-1-dev`
 |---|---|---|---|---|---|
 | Rule-based | 3.8% (19) | 3.9% (15) | 3.3% (4) | 34 ms / 73 ms | $0 |
 | TAPAS, truncated | **47.2%** (236) | 55.3% (210) | 21.7% (26) | 547 ms / 1,148 ms | $0 |
-| TAPAS, chunked | 45.0% (225) | 55.3% (210) | 12.5% (15) | 532 ms / 2,715 ms | $0 |
+| TAPAS, chunked (union) | 45.0% (225) | 55.3% (210) | 12.5% (15) | 532 ms / 2,715 ms | $0 |
+| TAPAS, chunked (routed) | **48.4%** (242) | 55.3% (210) | 26.7% (32) | 413 ms / 2,122 ms | $0 |
 | LLM agent | — | — | — | — | — |
 
 **These TAPAS numbers are inflated and are not a fair comparison yet.** The dev split is
 carved out of WTQ's training data, which this TAPAS checkpoint was fine-tuned on. They
-are useful for comparing the two TAPAS variants with each other, not for comparing TAPAS
+are useful for comparing the TAPAS variants with each other, not for comparing TAPAS
 with the other systems. That comparison will be made on the held-out test split.
 
 What the numbers say:
 
-- **Chunking as implemented makes TAPAS worse, not better.** On the 120 questions whose
-  table does not fit, taking the union of every chunk's selected cells scores 12.5%
-  against 21.7% for simply dropping the rows that do not fit. It fixed 12 questions and
-  broke 23.
-- The wins are counting questions, where seeing every row matters ("how many teams
+- **Naive chunking makes TAPAS worse, not better.** On the 120 questions whose table
+  does not fit, taking the union of every chunk's selected cells scores 12.5% against
+  21.7% for simply dropping the rows that do not fit. It fixed 12 questions and broke 23.
+  The wins are counting questions, where seeing every row matters ("how many teams
   played altogether?": 29 truncated, 64 chunked, gold 64). The losses are lookups and
   superlatives, where each chunk volunteers its own answer and the union returns two
   values instead of one.
-- Both variants are much weaker on tables that do not fit (21.7% at best) than on tables
+- **Routing by operator repairs that.** The routed rule keeps the union for sum, average
+  and count but answers a lookup from the single most confident chunk. Against the union
+  rule it fixes 17 questions and breaks none (12.5% → 26.7% on the 120).
+- **Routed chunking is not yet shown to beat truncation.** It is ahead by 6 questions on
+  the 120 (16 fixed, 10 broken), which is well within what chance would produce on a
+  sample this size. The routed rule was also designed after looking at the union rule's
+  failures on this same subset, so even that margin is optimistic. It was run once and
+  not iterated on.
+- Every variant is much weaker on tables that do not fit (26.7% at best) than on tables
   that do (55.3%), so large tables are a problem for TAPAS either way.
 - The rule-based engine's 19 correct answers all come from `SELECT COUNT(*) FROM t` on
   "how many ..." questions whose answer happens to be the table's row count. It did not
   get a single lookup, filter, comparison or superlative right; 284 questions fall
   through to `SELECT *` and 77 queries fail to execute.
 
-Latency is measured on a laptop CPU. For the rule-based system it includes loading the
-table into DuckDB per question; for TAPAS it excludes loading the model.
+Latency is measured on a laptop CPU and is noisy: the two chunked variants do the same
+model work, yet their timings differ by about 20% between runs. For the rule-based
+system it includes loading the table into DuckDB per question; for TAPAS it excludes
+loading the model.
 
 Raw predictions for every question are in [`results/`](results/), so anyone can re-score
 them. Numbers on the WTQ **test** split are deliberately not reported yet: test is held
@@ -76,6 +86,7 @@ downloads the `google/tapas-base-finetuned-wtq` checkpoint (443 MB) on first use
 uv sync --extra tapas
 uv run python -m tableqa.eval.runner --system tapas --split dev --n 500 --seed 42
 uv run python -m tableqa.eval.runner --system tapas_chunked --split dev --n 500 --seed 42
+uv run python -m tableqa.eval.runner --system tapas_chunked_routed --split dev --n 500 --seed 42
 ```
 
 ## How it is measured
@@ -118,13 +129,21 @@ Rows are packed greedily, in order, into chunks that each fit the limit together
 the question and the header.
 
 - **`tapas`** uses the first chunk only: rows that do not fit are dropped from the end.
-- **`tapas_chunked`** runs TAPAS on every chunk, takes the union of the selected cells,
-  and uses the operator with the highest mean probability across chunks.
+- **`tapas_chunked`** runs TAPAS on every chunk and takes the union of the selected cells.
+- **`tapas_chunked_routed`** runs TAPAS on every chunk and lets the predicted operator
+  decide: sum, average and count keep the union, while a lookup (no operator) keeps only
+  the chunk that holds the single most confident cell.
+
+In both chunked variants the operator is the one with the highest mean probability
+across chunks.
 
 Chunking lets TAPAS see every row, but each chunk is answered in isolation, so a
 question that compares rows in different chunks ("which has the highest ...") cannot be
-answered correctly by construction. The combination rule was fixed before the first run
-and has not been tuned.
+answered correctly by construction.
+
+The union rule was fixed before the first run. The routed rule was designed afterwards,
+from the union rule's failures on the dev subset, which is what dev is for; it has no
+tuned thresholds and was run once.
 
 ## The SQL sandbox
 
