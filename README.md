@@ -12,9 +12,9 @@ Every system answers through one interface, generated SQL runs in a locked-down 
 sandbox, and answers are scored by denotation match on
 [WikiTableQuestions](https://github.com/ppasupat/WikiTableQuestions) (WTQ).
 
-**Status:** work in progress. All three systems run on the dev subset. Still to come:
-the held-out test split, the context-engineering variants, the large-table stress test,
-the failure taxonomy and the service.
+**Status:** work in progress. All three systems have run on the dev subset and on the
+synthetic large-table test. Still to come: the held-out test split, the
+context-engineering variants, the failure taxonomy and the service.
 
 ## Results so far
 
@@ -34,8 +34,8 @@ WTQ **dev** subset: 500 questions sampled with seed 42 from `random-split-1-dev`
   TAPAS checkpoint was fine-tuned on.
 - *The agent may be inflated too.* WTQ has been public since 2015, so a current LLM may
   have seen these questions and answers in training. That cannot be ruled out on any
-  split of a public benchmark; the synthetic large-table test, generated fresh, will be
-  the uncontaminated check.
+  split of a public benchmark. The synthetic large-table test below cannot have been
+  seen, but it is much easier than WTQ, so it does not settle the question.
 - *The agent's runs are not repeatable.* Current Claude models accept no sampling
   temperature. Of 20 questions answered in two separate runs, 2 changed from right to
   wrong. The 87.0% is one run, not an average.
@@ -90,6 +90,45 @@ The agent's cost is computed from the token usage the API reported, at list pric
 Raw predictions for every question are in [`results/`](results/), so anyone can re-score
 them. Numbers on the WTQ **test** split are deliberately not reported yet: test is held
 back until all three systems are frozen.
+
+## Large-table stress test
+
+Invented order tables (11 columns) generated from a seed at 1,000, 10,000 and 100,000
+rows, with 40 templated questions per size: five each of lookup, filter, count, sum,
+average, top-N, group-by and multi-step. Gold answers are computed in plain Python from
+the rows and cross-checked in the tests against separately written SQL. The tables did
+not exist before they were generated, so no model can have seen them in training.
+
+Correct answers out of 40, with median latency per question:
+
+| System | 1,000 rows | 10,000 rows | 100,000 rows |
+|---|---|---|---|
+| Rule-based | 1 (39 ms) | 1 (114 ms) | 1 (1.0 s) |
+| TAPAS, truncated | 2 (0.9 s) | 0 (0.9 s) | 1 (0.9 s) |
+| TAPAS, chunked (routed) | 2 (58 s) | not run | not run |
+| LLM agent (Haiku 5.5) | **40** (4.8 s) | **40** (5.0 s) | **40** (5.7 s) |
+
+- **The agent's accuracy does not depend on table size.** It answered all 120
+  questions, in every type, for $0.054 in total ($0.43-0.48 per 1,000 questions). Its
+  latency rises by under a second from 1,000 to 100,000 rows, and that second is the
+  time to load the table into DuckDB.
+- **A perfect score also means this test is too easy to rank the agent.** The tables are
+  clean and the questions are templated, unlike WTQ's messy Wikipedia tables. The result
+  shows that the agent scales and is not reciting memorised answers. It does not confirm
+  the 87% on WTQ, and it does not show where the agent's limits are.
+- **TAPAS cannot be scaled up by chunking on this hardware.** Only 18 of these rows fit
+  in its 512-token window. Truncated, it sees 18 rows of 100,000 and its few correct
+  answers are luck. Chunked, a 1,000-row table takes 56 model passes and about a minute
+  per question on a laptop CPU, and still scores 2 of 40, because a sum or a ranking
+  over the whole table cannot be assembled from chunks answered in isolation. At about
+  one second per pass, 10,000 rows would take roughly 10 minutes per question and
+  100,000 rows roughly an hour and a half; those two are estimates and were not run.
+- **The rule-based engine's one correct answer** at each size is a plain row count.
+
+```bash
+uv run python -m tableqa.eval.runner --system rule_based --dataset synthetic --rows 100000
+uv run python -m tableqa.eval.runner --system agent_haiku --dataset synthetic --rows 100000 --max-cost 0.25
+```
 
 ## Reproduce
 
@@ -217,6 +256,7 @@ src/tableqa/
   table.py              Table: original headers, SQL-safe names, inferred types
   interface.py          answer(question, table) -> Prediction
   data/wtq.py           WTQ download, loader, seeded sampling
+  data/synthetic.py     generated order tables and typed questions for the stress test
   execution/sandbox.py  read-only DuckDB sandbox
   systems/rule_based/   nlp_sql.py (the engine) + system.py (adapter)
   systems/tapas/        logic.py (chunk packing, answer computation) + system.py (model)
