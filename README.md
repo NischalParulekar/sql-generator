@@ -101,7 +101,7 @@ src/tableqa/
   systems/rule_based/   nlp_sql.py (the engine) + system.py (adapter)
   eval/                 metrics.py, runner.py
   service/app.py        FastAPI app (currently only POST /generate-sql)
-frontend/               React UI for the SQL generator (Create React App)
+frontend/               React UI for the SQL generator (Vite)
 results/                committed predictions and summaries
 tests/
 ```
@@ -136,8 +136,10 @@ uv run --extra service uvicorn tableqa.service.app:app --port 8000
 ```
 
 ```bash
-cd frontend && npm install && npm start
+cd frontend && npm install && npm run dev
 ```
+
+The UI runs at `http://localhost:3000` and proxies `/generate-sql` to the API on port 8000.
 
 ## Data and license
 
