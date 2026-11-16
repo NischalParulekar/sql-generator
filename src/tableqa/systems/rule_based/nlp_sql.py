@@ -5,8 +5,6 @@ No AI or ML models — pure pattern matching and heuristics.
 
 import re
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Tuple
-
 
 # ─── Schema ────────────────────────────────────────────────────────────────────
 
@@ -28,9 +26,9 @@ class Column:
 @dataclass
 class Table:
     name: str
-    columns: List[Column] = field(default_factory=list)
+    columns: list[Column] = field(default_factory=list)
 
-    def find_col(self, keyword: str) -> Optional[Column]:
+    def find_col(self, keyword: str) -> Column | None:
         kw = keyword.lower().replace(" ", "_").replace("-", "_")
         cmap = {c.name.lower(): c for c in self.columns}
         if kw in cmap:
@@ -41,13 +39,13 @@ class Table:
         return None
 
     @property
-    def col_names(self) -> List[str]:
+    def col_names(self) -> list[str]:
         return [c.name for c in self.columns]
 
 
-def parse_schema(sql: str) -> List[Table]:
+def parse_schema(sql: str) -> list[Table]:
     """Extract tables + columns from CREATE TABLE statements."""
-    tables: List[Table] = []
+    tables: list[Table] = []
     pattern = re.compile(
         r"CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?[`\"\[]?(\w+)[`\"\]]?\s*\(([^;]+)\)",
         re.IGNORECASE | re.DOTALL,
@@ -55,10 +53,10 @@ def parse_schema(sql: str) -> List[Table]:
     for m in pattern.finditer(sql):
         tname = m.group(1)
         body = m.group(2)
-        cols: List[Column] = []
+        cols: list[Column] = []
         for line in re.split(r",(?:\s*\n?)", body):
             line = line.strip()
-            if re.match(r"(PRIMARY|FOREIGN|UNIQUE|INDEX|KEY|CONSTRAINT|CHECK)\b", line, re.I):
+            if re.match(r"(PRIMARY|FOREIGN|UNIQUE|INDEX|KEY|CONSTRAINT|CHECK)\b", line, re.IGNORECASE):
                 continue
             cm = re.match(r"[`\"\[]?(\w+)[`\"\]]?\s+(\w+)", line)
             if cm and cm.group(1).upper() not in ("PRIMARY", "FOREIGN", "UNIQUE", "INDEX", "KEY"):
@@ -108,14 +106,14 @@ def _pluralize(w: str) -> str:
     return w + "s"
 
 
-def _resolve_col(word: str, table: Optional[Table]) -> str:
+def _resolve_col(word: str, table: Table | None) -> str:
     if table:
         col = table.find_col(word)
         return col.name if col else word
     return word
 
 
-def _guess_date_col(table: Optional[Table]) -> str:
+def _guess_date_col(table: Table | None) -> str:
     if table:
         for col in table.columns:
             if col.is_date or any(k in col.name.lower() for k in ["created", "date", "time", "_at"]):
@@ -125,7 +123,7 @@ def _guess_date_col(table: Optional[Table]) -> str:
 
 # ─── Component extractors ──────────────────────────────────────────────────────
 
-def _find_table(prompt: str, tables: List[Table]) -> Optional[Table]:
+def _find_table(prompt: str, tables: list[Table]) -> Table | None:
     candidates = sorted(tables, key=lambda t: len(t.name), reverse=True)
     for tbl in candidates:
         for variant in {tbl.name.lower(), _singularize(tbl.name.lower()), _pluralize(tbl.name.lower())}:
@@ -153,7 +151,7 @@ def _infer_table_name(prompt: str) -> str:
     return "records"
 
 
-def _extract_aggregate(prompt: str, table: Optional[Table]) -> Tuple[Optional[str], Optional[str]]:
+def _extract_aggregate(prompt: str, table: Table | None) -> tuple[str | None, str | None]:
     patterns = [
         (r"(?:how many|number of|count of)", "COUNT", "*"),
         (r"(?:count)\b", "COUNT", "*"),
@@ -174,7 +172,7 @@ def _extract_aggregate(prompt: str, table: Optional[Table]) -> Tuple[Optional[st
     return None, None
 
 
-def _extract_select_cols(prompt: str, table: Optional[Table]) -> List[str]:
+def _extract_select_cols(prompt: str, table: Table | None) -> list[str]:
     # "[verb] col1, col2 and col3 from/where/in"
     m = re.search(
         r"(?:select|show|get|retrieve|fetch|display|list)\s+(?:me\s+)?(?:the\s+)?(.+?)"
@@ -197,7 +195,7 @@ def _extract_select_cols(prompt: str, table: Optional[Table]) -> List[str]:
     return ["*"]
 
 
-def _extract_where_segment(prompt: str) -> Optional[str]:
+def _extract_where_segment(prompt: str) -> str | None:
     """Isolate the WHERE portion of the prompt for condition parsing."""
     m = re.search(
         r"\b(?:where|with|that have|having|whose)\b(.+?)(?:\border\b|\bgroup\b|\blimit\b|\bsort\b|$)",
@@ -206,8 +204,8 @@ def _extract_where_segment(prompt: str) -> Optional[str]:
     return m.group(1).strip() if m else None
 
 
-def _extract_conditions(prompt: str, table: Optional[Table]) -> List[str]:
-    conditions: List[str] = []
+def _extract_conditions(prompt: str, table: Table | None) -> list[str]:
+    conditions: list[str] = []
     segment = _extract_where_segment(prompt) or prompt
 
     # ── Date helpers ──────────────────────────────────────────────────────────
@@ -294,7 +292,7 @@ def _extract_conditions(prompt: str, table: Optional[Table]) -> List[str]:
     return unique
 
 
-def _extract_group_by(prompt: str, table: Optional[Table]) -> List[str]:
+def _extract_group_by(prompt: str, table: Table | None) -> list[str]:
     m = re.search(r"(?:group(?:ed)?\s+by|per|by\s+each)\s+(?:the\s+)?(\w+(?:\s*,\s*\w+)*)", prompt)
     if m:
         parts = re.split(r",\s*|\s+and\s+", m.group(1))
@@ -302,7 +300,7 @@ def _extract_group_by(prompt: str, table: Optional[Table]) -> List[str]:
     return []
 
 
-def _extract_order_by(prompt: str, table: Optional[Table]) -> Tuple[Optional[str], str]:
+def _extract_order_by(prompt: str, table: Table | None) -> tuple[str | None, str]:
     # "ordered/sorted by col [asc|desc]"
     m = re.search(
         r"(?:order(?:ed)?|sort(?:ed)?)\s+by\s+(?:the\s+)?(\w+)"
@@ -338,7 +336,7 @@ def _extract_order_by(prompt: str, table: Optional[Table]) -> Tuple[Optional[str
     return None, "ASC"
 
 
-def _extract_limit(prompt: str) -> Optional[int]:
+def _extract_limit(prompt: str) -> int | None:
     m = re.search(r"(?:top|first|limit|only)\s+(\d+)", prompt)
     if m:
         return int(m.group(1))
