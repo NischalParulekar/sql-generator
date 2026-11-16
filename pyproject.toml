@@ -14,6 +14,10 @@ service = [
     "pydantic==2.9.2",
 ]
 
+agent = [
+    "anthropic==2.8.0",
+    "python-dotenv==1.2.4",
+]
 tapas = [
     "torch==2.15.0",
     "transformers==5.23.0",

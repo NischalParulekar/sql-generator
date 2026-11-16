@@ -13,7 +13,8 @@ build/
 
 # Environment
 .env
-.env.local
+.env.*
+!.env.example
 
 # React / Node
 node_modules/
