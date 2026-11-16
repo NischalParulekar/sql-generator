@@ -6,16 +6,15 @@ benchmark, measured the same way?
 1. **Rule-based** — a regex/heuristic English-to-SQL engine (this repo's original code).
 2. **TAPAS** — a table transformer fine-tuned on WTQ, with and without chunking for
    tables over its 512-token limit.
-3. **LLM agent** — a Claude tool-use agent that writes and repairs SQL. *Built and tested
-   against a mocked model; not yet run against the real API.*
+3. **LLM agent** — a Claude tool-use agent (Haiku 5.5) that writes and repairs SQL.
 
 Every system answers through one interface, generated SQL runs in a locked-down DuckDB
 sandbox, and answers are scored by denotation match on
 [WikiTableQuestions](https://github.com/ppasupat/WikiTableQuestions) (WTQ).
 
-**Status:** work in progress. The benchmark pipeline, the rule-based baseline, TAPAS and
-the agent's code are in place; the agent's results, the large-table stress test and the
-service are still to come.
+**Status:** work in progress. All three systems run on the dev subset. Still to come:
+the held-out test split, the context-engineering variants, the large-table stress test,
+the failure taxonomy and the service.
 
 ## Results so far
 
@@ -27,15 +26,39 @@ WTQ **dev** subset: 500 questions sampled with seed 42 from `random-split-1-dev`
 | TAPAS, truncated | **47.2%** (236) | 55.3% (210) | 21.7% (26) | 547 ms / 1,148 ms | $0 |
 | TAPAS, chunked (union) | 45.0% (225) | 55.3% (210) | 12.5% (15) | 532 ms / 2,715 ms | $0 |
 | TAPAS, chunked (routed) | **48.4%** (242) | 55.3% (210) | 26.7% (32) | 413 ms / 2,122 ms | $0 |
-| LLM agent | — | — | — | — | — |
+| LLM agent (Haiku 5.5) | **87.0%** (435) | 88.9% (338) | 80.8% (97) | 4.0 s / 6.1 s | $0.47 |
 
-**These TAPAS numbers are inflated and are not a fair comparison yet.** The dev split is
-carved out of WTQ's training data, which this TAPAS checkpoint was fine-tuned on. They
-are useful for comparing the TAPAS variants with each other, not for comparing TAPAS
-with the other systems. That comparison will be made on the held-out test split.
+**This table is not a fair comparison yet. Read it with three caveats.**
+
+- *TAPAS is inflated.* The dev split is carved out of WTQ's training data, which this
+  TAPAS checkpoint was fine-tuned on.
+- *The agent may be inflated too.* WTQ has been public since 2015, so a current LLM may
+  have seen these questions and answers in training. That cannot be ruled out on any
+  split of a public benchmark; the synthetic large-table test, generated fresh, will be
+  the uncontaminated check.
+- *The agent's runs are not repeatable.* Current Claude models accept no sampling
+  temperature. Of 20 questions answered in two separate runs, 2 changed from right to
+  wrong. The 87.0% is one run, not an average.
+
+The cross-system comparison will be made on the held-out test split.
 
 What the numbers say:
 
+- **The agent is far ahead on this subset, and it is cheap.** 435 of 500 correct for
+  $0.23 in total. It is right on 213 questions TAPAS (truncated) gets wrong and wrong on
+  14 that TAPAS gets right; 51 defeat both. It is also slower: about 4 seconds a
+  question against half a second for TAPAS.
+- **Large tables cost the agent 8 points, not 30.** It scores 80.8% on tables too big
+  for TAPAS's window against 88.9% on the rest, because it queries the table with SQL
+  and never reads it whole. TAPAS drops from 55.3% to 26.7% at best.
+- **It almost never needs a second try.** 439 questions took exactly three model turns
+  (look at the table, one query, answer); only 3 had a failed query to repair. Prompt
+  caching carried nearly all the input, which is why the cost is under $0.50 per 1,000.
+- **Where it fails (65 questions), from a first read:** 9 have the right number in the
+  wrong form ("5" for "5 days", or the reverse); others are partial lists, wrong rows on
+  "longest" or "least" questions, and counts done by eye instead of in SQL. 34 questions
+  were answered from the sample rows with no query at all (30 of them correctly, all on
+  tables of 43 rows or fewer). These are impressions, not the labelled failure taxonomy.
 - **Naive chunking makes TAPAS worse, not better.** On the 120 questions whose table
   does not fit, taking the union of every chunk's selected cells scores 12.5% against
   21.7% for simply dropping the rows that do not fit. It fixed 12 questions and broke 23.
@@ -61,7 +84,8 @@ What the numbers say:
 Latency is measured on a laptop CPU and is noisy: the two chunked variants do the same
 model work, yet their timings differ by about 20% between runs. For the rule-based
 system it includes loading the table into DuckDB per question; for TAPAS it excludes
-loading the model.
+loading the model; for the agent it is dominated by network round trips to the API.
+The agent's cost is computed from the token usage the API reported, at list prices.
 
 Raw predictions for every question are in [`results/`](results/), so anyone can re-score
 them. Numbers on the WTQ **test** split are deliberately not reported yet: test is held
