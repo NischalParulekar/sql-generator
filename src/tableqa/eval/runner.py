@@ -11,6 +11,7 @@ Writes, under results/wtq-<split>-n<n>-seed<seed>/:
 import argparse
 import functools
 import json
+import sys
 import time
 from collections.abc import Callable
 from dataclasses import asdict
@@ -22,14 +23,26 @@ from tableqa.interface import Prediction, System
 from tableqa.systems.rule_based.system import RuleBasedSystem
 from tableqa.table import Table
 
+
+def _tapas(chunked: bool) -> System:
+    # Imported on demand: TAPAS needs the optional torch/transformers dependencies.
+    from tableqa.systems.tapas.system import TapasSystem
+
+    return TapasSystem(chunked=chunked)
+
+
 SYSTEMS: dict[str, Callable[[], System]] = {
     "rule_based": RuleBasedSystem,
+    "tapas": functools.partial(_tapas, chunked=False),
+    "tapas_chunked": functools.partial(_tapas, chunked=True),
 }
 
 
 def run(system: System, examples: list[Example], get_table: Callable[[str], Table]) -> list[dict]:
     records = []
-    for example in examples:
+    for done, example in enumerate(examples):
+        if done and done % 50 == 0:
+            print(f"{done}/{len(examples)} questions", file=sys.stderr)
         table = get_table(example.table_id)
         start = time.perf_counter()
         try:
