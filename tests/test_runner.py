@@ -173,3 +173,36 @@ def test_scattered_crashes_and_ordinary_errors_do_not_abort_the_run(tmp_path):
         RuleBasedSystem(), failing_sql, {"players": TABLE}.__getitem__, tmp_path / "b.jsonl"
     )
     assert len(records) == 8 and all(r["error"].startswith("QueryFailed") for r in records)
+
+
+def test_typed_questions_are_recorded_and_summarised_per_type():
+    examples = [
+        Example("q1", "top scorer?", "players", ("Cy",), "lookup"),
+        Example("q2", "how many players?", "players", ("3",), "count"),
+        Example("q3", "how many goals?", "players", ("29",), "count"),
+    ]
+    system = ScriptedSystem(
+        {
+            "top scorer?": (["Cy"], 1.0),
+            "how many players?": (["3"], 1.0),
+            "how many goals?": (["30"], 1.0),
+        }
+    )
+    records = list(run(system, examples, {"players": TABLE}.__getitem__))
+
+    assert [r["type"] for r in records] == ["lookup", "count", "count"]
+    assert summarize(records)["by_type"] == {
+        "lookup": {"n": 1, "correct": 1},
+        "count": {"n": 2, "correct": 1},
+    }
+
+
+def test_untyped_questions_add_no_type_fields():
+    examples = [Example("q1", "top scorer?", "players", ("Cy",))]
+    records = list(
+        run(
+            ScriptedSystem({"top scorer?": (["Cy"], 1.0)}), examples, {"players": TABLE}.__getitem__
+        )
+    )
+    assert "type" not in records[0]
+    assert "by_type" not in summarize(records)
