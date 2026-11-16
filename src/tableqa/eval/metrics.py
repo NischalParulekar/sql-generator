@@ -40,8 +40,7 @@ def normalize(text: str) -> str:
         text = re.sub(r'^"([^"]*)"$', r"\1", text.strip())
         if text == before:
             break
-    if text.endswith("."):
-        text = text[:-1]
+    text = text.removesuffix(".")
     return re.sub(r"\s+", " ", text).lower().strip()
 
 
