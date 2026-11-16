@@ -1,0 +1,51 @@
+{
+  "system": "tapas",
+  "dataset": "synthetic",
+  "rows": 100000,
+  "seed": 42,
+  "n": 40,
+  "correct": 1,
+  "accuracy": 0.025,
+  "errors": 0,
+  "no_answer": 0,
+  "latency_ms_p50": 890.3593000004548,
+  "latency_ms_p95": 1090.6762500004334,
+  "cost_usd_per_1k": 0.0,
+  "tokens": 0,
+  "by_type": {
+    "lookup": {
+      "n": 5,
+      "correct": 0
+    },
+    "filter": {
+      "n": 5,
+      "correct": 0
+    },
+    "count": {
+      "n": 5,
+      "correct": 0
+    },
+    "sum": {
+      "n": 5,
+      "correct": 0
+    },
+    "average": {
+      "n": 5,
+      "correct": 0
+    },
+    "top_n": {
+      "n": 5,
+      "correct": 0
+    },
+    "group_by": {
+      "n": 5,
+      "correct": 1
+    },
+    "multi_step": {
+      "n": 5,
+      "correct": 0
+    }
+  },
+  "cost_usd": 0.0,
+  "stopped_at_cost_cap": false
+}
