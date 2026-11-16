@@ -1,11 +1,19 @@
-"""Run one system over a seeded WikiTableQuestions subset.
+"""Run one system over a benchmark and score it.
+
+A seeded WikiTableQuestions subset:
 
     python -m tableqa.eval.runner --system rule_based --split dev --n 500 --seed 42
 
-Writes, under results/wtq-<split>-n<n>-seed<seed>/:
+The synthetic large-table test, at a chosen table size:
+
+    python -m tableqa.eval.runner --system rule_based --dataset synthetic --rows 100000
+
+Writes, under results/wtq-<split>-n<n>-seed<seed>/ or results/synthetic-rows<rows>-seed<seed>/:
 - <system>.predictions.jsonl  one line per question with the raw prediction, so anyone
                               can re-score it;
-- <system>.summary.json       accuracy, error counts, latency p50/p95, cost per 1k.
+- <system>.summary.json       accuracy (overall, and per question type where the
+                              questions have types), error counts, latency p50/p95,
+                              cost per 1k.
 """
 
 import argparse
@@ -17,6 +25,7 @@ from collections.abc import Callable, Iterator
 from dataclasses import asdict
 from pathlib import Path
 
+from tableqa.data import synthetic
 from tableqa.data.wtq import WTQ, Example, download, sample
 from tableqa.eval.metrics import denotation_match, percentile
 from tableqa.interface import Prediction, System
@@ -73,6 +82,7 @@ def run(
             "id": example.id,
             "question": example.question,
             "table_id": example.table_id,
+            **({"type": example.type} if example.type else {}),
             "gold": list(example.answer),
             "correct": denotation_match(prediction.answer, list(example.answer)),
             **asdict(prediction),
@@ -123,6 +133,12 @@ def summarize(records: list[dict]) -> dict:
     n = len(records)
     latencies = [r["latency_ms"] for r in records]
     correct = sum(r["correct"] for r in records)
+    by_type: dict[str, dict] = {}
+    for r in records:
+        if "type" in r:
+            group = by_type.setdefault(r["type"], {"n": 0, "correct": 0})
+            group["n"] += 1
+            group["correct"] += r["correct"]
     return {
         "n": n,
         "correct": correct,
@@ -133,14 +149,17 @@ def summarize(records: list[dict]) -> dict:
         "latency_ms_p95": percentile(latencies, 95),
         "cost_usd_per_1k": sum(r["cost_usd"] for r in records) / n * 1000,
         "tokens": sum(r["tokens"] for r in records),
+        **({"by_type": by_type} if by_type else {}),
     }
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--system", choices=sorted(SYSTEMS), required=True)
-    parser.add_argument("--split", choices=["dev", "test"], default="dev")
-    parser.add_argument("--n", type=int, default=500)
+    parser.add_argument("--dataset", choices=["wtq", "synthetic"], default="wtq")
+    parser.add_argument("--split", choices=["dev", "test"], default="dev", help="wtq only")
+    parser.add_argument("--n", type=int, default=500, help="wtq only: questions to sample")
+    parser.add_argument("--rows", type=int, default=1000, help="synthetic only: table size")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--out", type=Path, default=Path("results"))
     parser.add_argument(
@@ -150,25 +169,35 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    dataset = WTQ(download())
-    examples = sample(dataset.examples(args.split), args.n, args.seed)
+    if args.dataset == "wtq":
+        dataset = WTQ(download())
+        examples = sample(dataset.examples(args.split), args.n, args.seed)
+        get_table = functools.cache(dataset.table)
+        run_name = f"wtq-{args.split}-n{args.n}-seed{args.seed}"
+        benchmark = {"dataset": "wtq", "split": args.split, "seed": args.seed}
+    else:
+        table, examples = synthetic.generate(args.rows, args.seed)
+
+        def get_table(_table_id: str) -> Table:
+            return table
+
+        run_name = f"synthetic-rows{args.rows}-seed{args.seed}"
+        benchmark = {"dataset": "synthetic", "rows": args.rows, "seed": args.seed}
     system = SYSTEMS[args.system]()
 
-    out_dir = args.out / f"wtq-{args.split}-n{args.n}-seed{args.seed}"
+    out_dir = args.out / run_name
     out_dir.mkdir(parents=True, exist_ok=True)
     records, stopped_at_cost_cap = run_and_save(
         system,
         examples,
-        functools.cache(dataset.table),
+        get_table,
         out_dir / f"{system.name}.predictions.jsonl",
         args.max_cost,
     )
 
     summary = {
         "system": system.name,
-        "dataset": "wtq",
-        "split": args.split,
-        "seed": args.seed,
+        **benchmark,
         **summarize(records),
         "cost_usd": sum(r["cost_usd"] for r in records),
         "stopped_at_cost_cap": stopped_at_cost_cap,
