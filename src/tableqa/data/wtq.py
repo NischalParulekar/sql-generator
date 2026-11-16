@@ -45,6 +45,7 @@ class Example:
     question: str
     table_id: str  # path of the table inside the dataset, e.g. csv/204-csv/590.csv
     answer: tuple[str, ...]
+    type: str | None = None  # question type, where the dataset has one (WTQ does not)
 
 
 def download(dest: Path = DEFAULT_ZIP) -> Path:
