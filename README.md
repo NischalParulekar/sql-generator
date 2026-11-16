@@ -6,14 +6,16 @@ benchmark, measured the same way?
 1. **Rule-based** — a regex/heuristic English-to-SQL engine (this repo's original code).
 2. **TAPAS** — a table transformer fine-tuned on WTQ, with and without chunking for
    tables over its 512-token limit.
-3. **LLM agent** — a Claude tool-use agent that writes and repairs SQL. *Not built yet.*
+3. **LLM agent** — a Claude tool-use agent that writes and repairs SQL. *Built and tested
+   against a mocked model; not yet run against the real API.*
 
 Every system answers through one interface, generated SQL runs in a locked-down DuckDB
 sandbox, and answers are scored by denotation match on
 [WikiTableQuestions](https://github.com/ppasupat/WikiTableQuestions) (WTQ).
 
-**Status:** work in progress. The benchmark pipeline, the rule-based baseline and TAPAS
-are in place; the agent, the large-table stress test and the service are still to come.
+**Status:** work in progress. The benchmark pipeline, the rule-based baseline, TAPAS and
+the agent's code are in place; the agent's results, the large-table stress test and the
+service are still to come.
 
 ## Results so far
 
@@ -89,6 +91,16 @@ uv run python -m tableqa.eval.runner --system tapas_chunked --split dev --n 500 
 uv run python -m tableqa.eval.runner --system tapas_chunked_routed --split dev --n 500 --seed 42
 ```
 
+The agent needs the `agent` extra and an Anthropic API key, and each run costs money.
+Copy `.env.example` to `.env` and put the key there; `.env` is git-ignored. `--max-cost`
+stops a run once it has spent that many US dollars, and predictions are written as they
+arrive, so a stopped run keeps what it paid for.
+
+```bash
+uv sync --extra agent
+uv run python -m tableqa.eval.runner --system agent_haiku --split dev --n 20 --seed 42 --max-cost 0.25
+```
+
 ## How it is measured
 
 These rules were fixed before the first run.
@@ -145,6 +157,27 @@ The union rule was fixed before the first run. The routed rule was designed afte
 from the union rule's failures on the dev subset, which is what dev is for; it has no
 tuned thresholds and was run once.
 
+## The LLM agent
+
+The agent never sees the whole table. It has four tools and a budget of six model turns
+per question:
+
+- `get_schema` — row count, and each column's SQL name, type and original header;
+- `sample_rows` — the first few rows (at most 5);
+- `run_sql` — one read-only DuckDB `SELECT` in the sandbox, returning at most 30 rows,
+  or the error message so the model can repair the query;
+- `final_answer` — ends the question.
+
+Because computation is pushed into SQL, the context stays small however large the table
+is. The loop is written by hand so that every step's tool calls, results and token
+usage are recorded; the full trace is stored with each prediction, and the model, prompt
+and tool definitions are stored in the run's summary. Cost is computed from the token
+usage the API reports, at the list prices in `systems/llm_agent/system.py`.
+
+The model is `claude-haiku-5-5`. Current Claude models do not accept a sampling
+temperature, so runs are not bit-for-bit repeatable; the committed predictions are the
+record of what each run answered.
+
 ## The SQL sandbox
 
 Generated SQL is untrusted. Each table is loaded into its own in-memory DuckDB database,
@@ -163,6 +196,7 @@ src/tableqa/
   execution/sandbox.py  read-only DuckDB sandbox
   systems/rule_based/   nlp_sql.py (the engine) + system.py (adapter)
   systems/tapas/        logic.py (chunk packing, answer computation) + system.py (model)
+  systems/llm_agent/    tools.py (the four tools) + system.py (prompt, loop, cost)
   eval/                 metrics.py, runner.py
   service/app.py        FastAPI app (currently only POST /generate-sql)
 frontend/               React UI for the SQL generator (Vite)
