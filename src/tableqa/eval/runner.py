@@ -34,7 +34,7 @@ def run(system: System, examples: list[Example], get_table: Callable[[str], Tabl
         start = time.perf_counter()
         try:
             prediction = system.answer(example.question, table)
-        except Exception as e:  # one broken question must not lose a long (or paid) run
+        except Exception as e:  # noqa: BLE001 - one broken question must not lose a paid run
             prediction = Prediction(
                 answer=[],
                 sql_or_trace=None,
@@ -95,8 +95,7 @@ def main() -> None:
     out_dir = args.out / f"wtq-{args.split}-n{args.n}-seed{args.seed}"
     out_dir.mkdir(parents=True, exist_ok=True)
     with open(out_dir / f"{system.name}.predictions.jsonl", "w", encoding="utf-8") as f:
-        for record in records:
-            f.write(json.dumps(record, ensure_ascii=False) + "\n")
+        f.writelines(json.dumps(record, ensure_ascii=False) + "\n" for record in records)
     with open(out_dir / f"{system.name}.summary.json", "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2)
         f.write("\n")
