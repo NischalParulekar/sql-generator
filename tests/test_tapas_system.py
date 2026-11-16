@@ -33,14 +33,23 @@ LONG = Table.from_strings(
 
 @pytest.fixture(scope="module")
 def chunked():
-    return TapasSystem(chunked=True)
+    return TapasSystem("tapas_chunked")
+
+
+def _variant(loaded, name):
+    system = copy.copy(loaded)  # share the loaded model
+    system.name = name
+    return system
 
 
 @pytest.fixture(scope="module")
 def truncating(chunked):
-    system = copy.copy(chunked)  # share the loaded model
-    system.chunked, system.name = False, "tapas"
-    return system
+    return _variant(chunked, "tapas")
+
+
+@pytest.fixture(scope="module")
+def routed(chunked):
+    return _variant(chunked, "tapas_chunked_routed")
 
 
 def test_cell_lookup(truncating):
@@ -89,3 +98,13 @@ def test_chunking_sees_every_row_of_a_long_table(chunked):
     assert trace["chunks"] > 1
     assert trace["rows_dropped"] == 0
     assert [290, 1] in trace["cells"]
+
+
+def test_routed_variant_selects_a_subset_of_the_union_on_a_long_table(chunked, routed):
+    question = "how many goals did player number 290 score?"
+    union, best = chunked.answer(question, LONG), routed.answer(question, LONG)
+    union_trace, trace = union.sql_or_trace[0], best.sql_or_trace[0]
+    assert trace["chunks"] == union_trace["chunks"] > 1
+    assert trace["rows_dropped"] == 0
+    assert trace["operator"] == union_trace["operator"]
+    assert {tuple(c) for c in trace["cells"]} <= {tuple(c) for c in union_trace["cells"]}

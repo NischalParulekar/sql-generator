@@ -24,17 +24,18 @@ from tableqa.systems.rule_based.system import RuleBasedSystem
 from tableqa.table import Table
 
 
-def _tapas(chunked: bool) -> System:
+def _tapas(variant: str) -> System:
     # Imported on demand: TAPAS needs the optional torch/transformers dependencies.
     from tableqa.systems.tapas.system import TapasSystem
 
-    return TapasSystem(chunked=chunked)
+    return TapasSystem(variant)
 
 
 SYSTEMS: dict[str, Callable[[], System]] = {
     "rule_based": RuleBasedSystem,
-    "tapas": functools.partial(_tapas, chunked=False),
-    "tapas_chunked": functools.partial(_tapas, chunked=True),
+    "tapas": functools.partial(_tapas, "tapas"),
+    "tapas_chunked": functools.partial(_tapas, "tapas_chunked"),
+    "tapas_chunked_routed": functools.partial(_tapas, "tapas_chunked_routed"),
 }
 
 
