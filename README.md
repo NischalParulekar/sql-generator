@@ -4,35 +4,52 @@ How well do three generations of table question answering hold up on the same pu
 benchmark, measured the same way?
 
 1. **Rule-based** — a regex/heuristic English-to-SQL engine (this repo's original code).
-2. **TAPAS** — a fine-tuned table transformer. *Not built yet.*
+2. **TAPAS** — a table transformer fine-tuned on WTQ, with and without chunking for
+   tables over its 512-token limit.
 3. **LLM agent** — a Claude tool-use agent that writes and repairs SQL. *Not built yet.*
 
 Every system answers through one interface, generated SQL runs in a locked-down DuckDB
 sandbox, and answers are scored by denotation match on
 [WikiTableQuestions](https://github.com/ppasupat/WikiTableQuestions) (WTQ).
 
-**Status:** work in progress. The benchmark pipeline and the rule-based baseline are in
-place; TAPAS, the agent, the large-table stress test and the service are still to come.
+**Status:** work in progress. The benchmark pipeline, the rule-based baseline and TAPAS
+are in place; the agent, the large-table stress test and the service are still to come.
 
 ## Results so far
 
 WTQ **dev** subset: 500 questions sampled with seed 42 from `random-split-1-dev`.
 
-| System | Accuracy | Execution errors | Latency p50 / p95 | Cost per 1k questions |
-|---|---|---|---|---|
-| Rule-based | **3.8%** (19 / 500) | 77 | 34 ms / 73 ms | $0 |
-| TAPAS | — | — | — | — |
-| LLM agent | — | — | — | — |
+| System | Accuracy | Table fits in 512 tokens (380 q) | Table does not fit (120 q) | Latency p50 / p95 | Cost per 1k |
+|---|---|---|---|---|---|
+| Rule-based | 3.8% (19) | 3.9% (15) | 3.3% (4) | 34 ms / 73 ms | $0 |
+| TAPAS, truncated | **47.2%** (236) | 55.3% (210) | 21.7% (26) | 547 ms / 1,148 ms | $0 |
+| TAPAS, chunked | 45.0% (225) | 55.3% (210) | 12.5% (15) | 532 ms / 2,715 ms | $0 |
+| LLM agent | — | — | — | — | — |
 
-Read the rule-based number for what it is:
+**These TAPAS numbers are inflated and are not a fair comparison yet.** The dev split is
+carved out of WTQ's training data, which this TAPAS checkpoint was fine-tuned on. They
+are useful for comparing the two TAPAS variants with each other, not for comparing TAPAS
+with the other systems. That comparison will be made on the held-out test split.
 
-- All 19 correct answers come from `SELECT COUNT(*) FROM t` on "how many ..." questions
-  whose answer happens to be the table's row count. The engine did not get a single
-  lookup, filter, comparison or superlative question right.
-- 284 of the 500 questions fall through to `SELECT *`, which can never be a correct answer.
-- 77 queries fail to execute, almost all with a binder error (a word from the question
-  used as a column name that does not exist).
-- Latency is measured on a laptop and includes loading the table into DuckDB per question.
+What the numbers say:
+
+- **Chunking as implemented makes TAPAS worse, not better.** On the 120 questions whose
+  table does not fit, taking the union of every chunk's selected cells scores 12.5%
+  against 21.7% for simply dropping the rows that do not fit. It fixed 12 questions and
+  broke 23.
+- The wins are counting questions, where seeing every row matters ("how many teams
+  played altogether?": 29 truncated, 64 chunked, gold 64). The losses are lookups and
+  superlatives, where each chunk volunteers its own answer and the union returns two
+  values instead of one.
+- Both variants are much weaker on tables that do not fit (21.7% at best) than on tables
+  that do (55.3%), so large tables are a problem for TAPAS either way.
+- The rule-based engine's 19 correct answers all come from `SELECT COUNT(*) FROM t` on
+  "how many ..." questions whose answer happens to be the table's row count. It did not
+  get a single lookup, filter, comparison or superlative right; 284 questions fall
+  through to `SELECT *` and 77 queries fail to execute.
+
+Latency is measured on a laptop CPU. For the rule-based system it includes loading the
+table into DuckDB per question; for TAPAS it excludes loading the model.
 
 Raw predictions for every question are in [`results/`](results/), so anyone can re-score
 them. Numbers on the WTQ **test** split are deliberately not reported yet: test is held
@@ -51,6 +68,15 @@ uv run python -m tableqa.eval.runner --system rule_based --split dev --n 500 --s
 
 The first eval run downloads the WTQ v1.0.2 release (29 MB) from the official GitHub
 repository into `data/wtq/` and verifies its SHA-256. The dataset is not committed.
+
+TAPAS needs the optional dependencies (CPU-only PyTorch, transformers, pandas) and
+downloads the `google/tapas-base-finetuned-wtq` checkpoint (443 MB) on first use:
+
+```bash
+uv sync --extra tapas
+uv run python -m tableqa.eval.runner --system tapas --split dev --n 500 --seed 42
+uv run python -m tableqa.eval.runner --system tapas_chunked --split dev --n 500 --seed 42
+```
 
 ## How it is measured
 
@@ -82,6 +108,24 @@ slightly from published ones.
 **Latency and cost.** p50 and p95 of per-question wall time on the same machine; cost is
 LLM tokens × price, 0 for local systems.
 
+## TAPAS and the 512-token limit
+
+TAPAS reads the question and the whole table as one sequence of at most 512 tokens,
+selects cells and predicts an operator (none, sum, average, count). The checkpoint is
+`google/tapas-base-finetuned-wtq`, pinned to a revision, run on CPU.
+
+Rows are packed greedily, in order, into chunks that each fit the limit together with
+the question and the header.
+
+- **`tapas`** uses the first chunk only: rows that do not fit are dropped from the end.
+- **`tapas_chunked`** runs TAPAS on every chunk, takes the union of the selected cells,
+  and uses the operator with the highest mean probability across chunks.
+
+Chunking lets TAPAS see every row, but each chunk is answered in isolation, so a
+question that compares rows in different chunks ("which has the highest ...") cannot be
+answered correctly by construction. The combination rule was fixed before the first run
+and has not been tuned.
+
 ## The SQL sandbox
 
 Generated SQL is untrusted. Each table is loaded into its own in-memory DuckDB database,
@@ -99,6 +143,7 @@ src/tableqa/
   data/wtq.py           WTQ download, loader, seeded sampling
   execution/sandbox.py  read-only DuckDB sandbox
   systems/rule_based/   nlp_sql.py (the engine) + system.py (adapter)
+  systems/tapas/        logic.py (chunk packing, answer computation) + system.py (model)
   eval/                 metrics.py, runner.py
   service/app.py        FastAPI app (currently only POST /generate-sql)
 frontend/               React UI for the SQL generator (Vite)
