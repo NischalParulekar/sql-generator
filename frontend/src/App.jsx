@@ -1,251 +1,202 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { ask, getSchema, getSystems, getTables, uploadTable } from './api';
+import ResultCard from './ResultCard';
+import TablePreview from './TablePreview';
 
-const styles = {
-  app: {
-    minHeight: '100vh',
-    backgroundColor: '#0f1117',
-    color: '#e2e8f0',
-    fontFamily: "'Segoe UI', system-ui, sans-serif",
-    padding: '40px 24px',
-  },
-  container: {
-    maxWidth: '860px',
-    margin: '0 auto',
-  },
-  header: {
-    marginBottom: '36px',
-  },
-  title: {
-    fontSize: '28px',
-    fontWeight: '700',
-    color: '#f8fafc',
-    margin: '0 0 6px 0',
-  },
-  subtitle: {
-    fontSize: '14px',
-    color: '#64748b',
-    margin: 0,
-  },
-  label: {
-    display: 'block',
-    fontSize: '13px',
-    fontWeight: '600',
-    color: '#94a3b8',
-    marginBottom: '8px',
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-  },
-  textarea: {
-    width: '100%',
-    backgroundColor: '#1e2130',
-    border: '1px solid #2d3148',
-    borderRadius: '8px',
-    color: '#e2e8f0',
-    fontSize: '14px',
-    padding: '12px 14px',
-    resize: 'vertical',
-    outline: 'none',
-    boxSizing: 'border-box',
-    fontFamily: 'inherit',
-    lineHeight: '1.6',
-    transition: 'border-color 0.15s',
-  },
-  schemaTextarea: {
-    fontFamily: "'Consolas', 'Monaco', monospace",
-    fontSize: '13px',
-  },
-  section: {
-    marginBottom: '20px',
-  },
-  button: {
-    backgroundColor: '#4f46e5',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '8px',
-    padding: '11px 28px',
-    fontSize: '14px',
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'background-color 0.15s',
-    marginTop: '4px',
-  },
-  buttonDisabled: {
-    backgroundColor: '#312e81',
-    cursor: 'not-allowed',
-    opacity: 0.7,
-  },
-  resultBox: {
-    backgroundColor: '#1e2130',
-    border: '1px solid #2d3148',
-    borderRadius: '8px',
-    padding: '16px',
-    marginTop: '24px',
-    position: 'relative',
-  },
-  resultHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '12px',
-  },
-  resultLabel: {
-    fontSize: '13px',
-    fontWeight: '600',
-    color: '#94a3b8',
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-  },
-  copyBtn: {
-    backgroundColor: 'transparent',
-    border: '1px solid #2d3148',
-    color: '#94a3b8',
-    borderRadius: '6px',
-    padding: '4px 12px',
-    fontSize: '12px',
-    cursor: 'pointer',
-    transition: 'all 0.15s',
-  },
-  pre: {
-    margin: 0,
-    fontFamily: "'Consolas', 'Monaco', monospace",
-    fontSize: '13px',
-    color: '#a5f3fc',
-    whiteSpace: 'pre-wrap',
-    wordBreak: 'break-word',
-    lineHeight: '1.7',
-  },
-  error: {
-    backgroundColor: '#2d1b1b',
-    border: '1px solid #7f1d1d',
-    borderRadius: '8px',
-    padding: '12px 16px',
-    marginTop: '16px',
-    color: '#fca5a5',
-    fontSize: '14px',
-  },
-  divider: {
-    height: '1px',
-    backgroundColor: '#1e2130',
-    margin: '24px 0',
-  },
-  toggle: {
-    background: 'none',
-    border: 'none',
-    color: '#4f46e5',
-    fontSize: '13px',
-    cursor: 'pointer',
-    padding: '0',
-    marginBottom: '10px',
-    textDecoration: 'underline',
-  },
-};
+const REPO = 'https://github.com/NischalParulekar/sql-generator';
 
 export default function App() {
-  const [prompt, setPrompt] = useState('');
-  const [schema, setSchema] = useState('');
-  const [showSchema, setShowSchema] = useState(false);
-  const [sql, setSql] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [copied, setCopied] = useState(false);
+  const [tables, setTables] = useState([]);
+  const [uploads, setUploads] = useState([]);
+  const [systems, setSystems] = useState([]);
+  const [selected, setSelected] = useState([]);
+  const [tableId, setTableId] = useState('');
+  const [schema, setSchema] = useState(null);
+  const [question, setQuestion] = useState('');
+  const [results, setResults] = useState({});
+  const [notice, setNotice] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const fileInput = useRef(null);
 
-  const handleGenerate = async () => {
-    if (!prompt.trim()) return;
-    setLoading(true);
-    setError('');
-    setSql('');
+  useEffect(() => {
+    Promise.all([getTables(), getSystems()])
+      .then(([tableList, systemList]) => {
+        setTables(tableList);
+        setSystems(systemList);
+        setSelected(systemList.map((s) => s.system));
+        if (tableList.length) setTableId(tableList[0].table_id);
+      })
+      .catch((e) => setNotice(e.message));
+  }, []);
 
+  useEffect(() => {
+    if (!tableId) return;
+    setSchema(null);
+    setResults({});
+    getSchema(tableId)
+      .then(setSchema)
+      .catch((e) => setNotice(e.message));
+  }, [tableId]);
+
+  const examples = schema?.example_questions || [];
+  const asking = Object.values(results).some((r) => r.status === 'loading');
+  const canAsk = question.trim() && tableId && selected.length && !asking;
+
+  function toggleSystem(system) {
+    setSelected((now) => (now.includes(system) ? now.filter((s) => s !== system) : [...now, system]));
+  }
+
+  async function submit(event) {
+    event.preventDefault();
+    if (!canAsk) return;
+    setNotice('');
+    const q = question.trim();
+    const order = systems.map((s) => s.system).filter((s) => selected.includes(s));
+    setResults(Object.fromEntries(order.map((s) => [s, { status: 'loading' }])));
+    await Promise.all(
+      order.map(async (system) => {
+        try {
+          const data = await ask(q, tableId, system);
+          setResults((now) => ({ ...now, [system]: { status: 'done', data } }));
+        } catch (e) {
+          const message = e.retryAfter ? `${e.message} (about ${e.retryAfter} s)` : e.message;
+          setResults((now) => ({ ...now, [system]: { status: 'error', message } }));
+        }
+      }),
+    );
+  }
+
+  async function onFile(event) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    setUploading(true);
+    setNotice('');
     try {
-      const res = await fetch('/generate-sql', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, schema }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || 'Failed to generate SQL');
-      setSql(data.sql);
-    } catch (err) {
-      setError(err.message);
+      const table = await uploadTable(file);
+      setUploads((now) => [
+        { table_id: table.table_id, name: table.name, row_count: table.row_count },
+        ...now.filter((t) => t.table_id !== table.table_id),
+      ]);
+      setTableId(table.table_id);
+    } catch (e) {
+      setNotice(e.message);
     } finally {
-      setLoading(false);
+      setUploading(false);
     }
-  };
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(sql);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  };
-
-  const handleKeyDown = (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') handleGenerate();
-  };
+  }
 
   return (
-    <div style={styles.app}>
-      <div style={styles.container}>
-        <div style={styles.header}>
-          <h1 style={styles.title}>SQL Generator</h1>
-          <p style={styles.subtitle}>Describe what you want in plain English — get exact SQL back.</p>
+    <div className="page">
+      <header className="masthead">
+        <div>
+          <h1>TableQA</h1>
+          <p className="lede">
+            Ask a question about a table and compare three ways of answering it: a rule-based
+            SQL engine, TAPAS, and a Claude agent that writes and repairs SQL.
+          </p>
         </div>
+        <a className="repo" href={REPO} target="_blank" rel="noreferrer">
+          Benchmark results and code
+        </a>
+      </header>
 
-        <div style={styles.section}>
-          <label style={styles.label}>What do you want to query?</label>
-          <textarea
-            style={styles.textarea}
-            rows={4}
-            placeholder="e.g. Find the top 10 customers by total order value in the last 30 days"
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            onKeyDown={handleKeyDown}
-          />
-        </div>
+      {notice && <p className="notice" role="alert">{notice}</p>}
 
-        <div style={styles.section}>
-          <button style={styles.toggle} onClick={() => setShowSchema(s => !s)}>
-            {showSchema ? '− Hide schema' : '+ Add schema (optional)'}
-          </button>
-          {showSchema && (
-            <>
-              <label style={styles.label}>Database Schema</label>
-              <textarea
-                style={{ ...styles.textarea, ...styles.schemaTextarea }}
-                rows={6}
-                placeholder={`e.g.\nCREATE TABLE orders (id INT, customer_id INT, total DECIMAL, created_at TIMESTAMP);\nCREATE TABLE customers (id INT, name VARCHAR, email VARCHAR);`}
-                value={schema}
-                onChange={(e) => setSchema(e.target.value)}
-              />
-            </>
-          )}
-        </div>
-
-        <button
-          style={{ ...styles.button, ...(loading || !prompt.trim() ? styles.buttonDisabled : {}) }}
-          onClick={handleGenerate}
-          disabled={loading || !prompt.trim()}
-        >
-          {loading ? 'Generating…' : 'Generate SQL'}
-        </button>
-
-        {error && <div style={styles.error}>{error}</div>}
-
-        {sql && (
-          <div style={styles.resultBox}>
-            <div style={styles.resultHeader}>
-              <span style={styles.resultLabel}>Generated SQL</span>
-              <button style={styles.copyBtn} onClick={handleCopy}>
-                {copied ? 'Copied!' : 'Copy'}
-              </button>
-            </div>
-            <pre style={styles.pre}>{sql}</pre>
+      <main className="layout">
+        <section className="panel" aria-labelledby="table-heading">
+          <div className="panel-head">
+            <h2 id="table-heading">Table</h2>
+            <button type="button" className="link" onClick={() => fileInput.current?.click()} disabled={uploading}>
+              {uploading ? 'Uploading…' : 'Upload a CSV'}
+            </button>
+            <input ref={fileInput} type="file" accept=".csv,text/csv" hidden onChange={onFile} />
           </div>
-        )}
+          <label className="field">
+            <span className="field-label">Choose a table</span>
+            <select id="table" value={tableId} onChange={(e) => setTableId(e.target.value)}>
+              {uploads.length > 0 && (
+                <optgroup label="Your uploads">
+                  {uploads.map((t) => (
+                    <option key={t.table_id} value={t.table_id}>
+                      {t.name} ({t.row_count.toLocaleString()} rows)
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              <optgroup label="Samples">
+                {tables.map((t) => (
+                  <option key={t.table_id} value={t.table_id}>
+                    {t.name} ({t.row_count.toLocaleString()} rows)
+                  </option>
+                ))}
+              </optgroup>
+            </select>
+          </label>
+          <TablePreview schema={schema} />
+        </section>
 
-        <div style={styles.divider} />
-        <p style={{ color: '#334155', fontSize: '12px', textAlign: 'center', margin: 0 }}>
-          Press Ctrl+Enter to generate · Powered by Claude
-        </p>
-      </div>
+        <section className="panel" aria-labelledby="ask-heading">
+          <h2 id="ask-heading">Question</h2>
+          <form onSubmit={submit} className="ask">
+            <textarea
+              id="question"
+              rows={2}
+              maxLength={500}
+              placeholder="e.g. Which driver earned the most points?"
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) submit(e);
+              }}
+            />
+            {examples.length > 0 && (
+              <div className="examples" aria-label="Example questions">
+                {examples.map((q) => (
+                  <button type="button" key={q} className="chip" onClick={() => setQuestion(q)}>
+                    {q}
+                  </button>
+                ))}
+              </div>
+            )}
+            <fieldset className="systems">
+              <legend className="field-label">Systems</legend>
+              {systems.map((s) => (
+                <label key={s.system} className="check">
+                  <input
+                    type="checkbox"
+                    checked={selected.includes(s.system)}
+                    onChange={() => toggleSystem(s.system)}
+                  />
+                  {s.name}
+                  {s.paid && <span className="hint">uses the Claude API</span>}
+                </label>
+              ))}
+            </fieldset>
+            <button type="submit" className="primary" disabled={!canAsk}>
+              {asking ? 'Answering…' : 'Ask'}
+            </button>
+          </form>
+        </section>
+
+        <section className="results" aria-label="Answers" aria-live="polite">
+          {Object.keys(results).length === 0 ? (
+            <p className="empty">
+              Pick a table, ask a question, and each system's answer appears here with how it got
+              there: the rule engine's SQL, the cells TAPAS chose, or every step the agent took.
+            </p>
+          ) : (
+            systems
+              .filter((s) => results[s.system])
+              .map((s) => <ResultCard key={s.system} name={s.name} result={results[s.system]} />)
+          )}
+        </section>
+      </main>
+
+      <footer className="footer">
+        Answers come from the TableQA service. Fresh answers from the Claude agent are rate limited
+        and capped per day; repeated questions are served from a cache.
+      </footer>
     </div>
   );
 }
