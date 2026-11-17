@@ -39,7 +39,8 @@ def wtq_samples(dataset: WTQ, n: int = 10, seed: int = 7) -> list[Sample]:
         if not 8 <= len(table.rows) <= 200:
             continue
         sample_id = "wtq-" + table_id.removeprefix("csv/").removesuffix(".csv").replace("/", "-")
-        name = ", ".join(table.headers[:3]) + (" …" if len(table.headers) > 3 else "")
+        named = [h for h in table.headers if h.strip()]
+        name = ", ".join(named[:3]) + (" …" if len(named) > 3 else "")
         samples.append(Sample(sample_id, name, table, by_table[table_id][:3]))
         if len(samples) == n:
             break

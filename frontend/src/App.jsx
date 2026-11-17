@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ask, getSchema, getSystems, getTables, uploadTable } from './api';
+import { RECORDED, ask, getSchema, getSystems, getTables, uploadTable } from './api';
 import ResultCard from './ResultCard';
 import TablePreview from './TablePreview';
 
-const REPO = 'https://github.com/NischalParulekar/sql-generator';
+const REPO = 'https://github.com/NischalParulekar/tableqa';
 
 export default function App() {
   const [tables, setTables] = useState([]);
@@ -101,15 +101,25 @@ export default function App() {
         </a>
       </header>
 
+      {RECORDED && (
+        <p className="recorded">
+          This page replays answers recorded during the benchmark runs, so it needs no server and
+          costs nothing to visit. Pick a table and one of its example questions; each system's
+          answer is exactly what it gave in the run, right or wrong. To ask your own questions or
+          upload a table, run the service from the repository.
+        </p>
+      )}
       {notice && <p className="notice" role="alert">{notice}</p>}
 
       <main className="layout">
         <section className="panel" aria-labelledby="table-heading">
           <div className="panel-head">
             <h2 id="table-heading">Table</h2>
-            <button type="button" className="link" onClick={() => fileInput.current?.click()} disabled={uploading}>
-              {uploading ? 'Uploading…' : 'Upload a CSV'}
-            </button>
+            {!RECORDED && (
+              <button type="button" className="link" onClick={() => fileInput.current?.click()} disabled={uploading}>
+                {uploading ? 'Uploading…' : 'Upload a CSV'}
+              </button>
+            )}
             <input ref={fileInput} type="file" accept=".csv,text/csv" hidden onChange={onFile} />
           </div>
           <label className="field">
@@ -194,8 +204,9 @@ export default function App() {
       </main>
 
       <footer className="footer">
-        Answers come from the TableQA service. Fresh answers from the Claude agent are rate limited
-        and capped per day; repeated questions are served from a cache.
+        {RECORDED
+          ? 'Tables from WikiTableQuestions (Pasupat & Liang, 2015, CC BY-SA 4.0) and a generated order table.'
+          : 'Answers come from the TableQA service. Fresh answers from the Claude agent are rate limited and capped per day; repeated questions are served from a cache.'}
       </footer>
     </div>
   );

@@ -120,6 +120,9 @@ export default function ResultCard({ name, result }) {
       <div className="card-head">
         <h3>{name}</h3>
         {d.cached && <span className="badge">From cache</span>}
+        {d.correct !== undefined && (
+          <span className={`badge ${d.correct ? 'right' : 'wrong'}`}>{d.correct ? 'Correct' : 'Wrong'}</span>
+        )}
       </div>
       {d.answer.length ? (
         <ul className="answer">
@@ -131,6 +134,7 @@ export default function ResultCard({ name, result }) {
       ) : (
         <p className="problem">No answer{d.error ? `: ${d.error}` : ''}</p>
       )}
+      {d.gold && !d.correct && <p className="meta">Expected: {d.gold.join(' | ')}</p>}
       <p className="meta">
         {duration(d.latency_ms)}
         {d.cached && ` (first answered in ${duration(d.system_latency_ms)})`}
