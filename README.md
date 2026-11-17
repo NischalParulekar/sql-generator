@@ -270,11 +270,26 @@ first-pass label; none was changed. The labels and notes are in
 ## Reproduce
 
 Requires [uv](https://docs.astral.sh/uv/) (it installs Python 3.11 and the pinned
-dependencies from `uv.lock`).
+dependencies from `uv.lock`) and `make`.
 
 ```bash
-uv sync
-uv run pytest
+make install       # every optional dependency
+make test
+make eval-quick    # the rule-based system on every benchmark, about two minutes
+make eval          # every free run, TAPAS included; about an hour on a laptop CPU
+make eval-agent    # the Claude agent's runs; about $0.60, each run capped by --max-cost
+```
+
+Runs write to `results/`, so `git diff --stat results/` shows what changed. Re-running
+the rule-based system reproduces every committed score exactly. The order of a long
+answer list from a query without `ORDER BY` can differ between runs, because DuckDB
+executes queries in parallel; answers are compared as sets, so scores do not change.
+The agent's runs are not repeatable at all (see the noise floor below), and timings
+always differ.
+
+One system and benchmark at a time:
+
+```bash
 uv run python -m tableqa.eval.runner --system rule_based --split dev --n 500 --seed 42
 ```
 
