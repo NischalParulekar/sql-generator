@@ -1,0 +1,50 @@
+{
+  "system": "agent_haiku_single_shot",
+  "dataset": "wtq",
+  "split": "dev",
+  "seed": 42,
+  "n": 500,
+  "correct": 392,
+  "accuracy": 0.784,
+  "errors": 12,
+  "no_answer": 20,
+  "latency_ms_p50": 2839.402200002951,
+  "latency_ms_p95": 5042.717234998054,
+  "cost_usd_per_1k": 0.35354274999999996,
+  "tokens": 861284,
+  "cost_usd": 0.17677137499999998,
+  "stopped_at_cost_cap": false,
+  "crashes_retried": 4,
+  "config": {
+    "model": "claude-haiku-5-5",
+    "effort": "medium",
+    "max_steps": 6,
+    "max_output_tokens": 4096,
+    "max_question_tokens": 60000,
+    "samples": true,
+    "profile": false,
+    "check_answer": false,
+    "single_shot": true,
+    "system_prompt": "You answer questions about one table by writing one DuckDB SQL query. The table is loaded into DuckDB as `t`. You are shown its schema and its first rows; you cannot see the rest of it, and you get one attempt: your query is run once, and the values in the first column of its result are taken as the answer.\n\nAbout the data\n- Column names have been normalised to snake_case; the schema also gives each column's original header text, which is often what the question refers to.\n- The tables come from Wikipedia and are messy. A column is typed as a number only when every cell in it is a plain number. Otherwise it is text, and cells such as \"1,234\", \"3rd\", \"12 (4)\" or \"2004\u201305\" need string functions (replace, regexp_extract, try_cast) before they can be compared or added. Some tables end with a totals row that should not be counted as data.\n- `rowid` is each row's position on the page, starting at 0. Use it for questions about order, such as \"first\", \"last\", \"next\", \"previous\" or \"above\".\n\nGiving the answer\n- Call submit_sql with a single SELECT statement. Text you write is not read.\n- The first column of the result must be the answer itself: a name or date as its cell shows it, a count or calculation as a bare number, and one row per item if the question has several answers.\n",
+    "tools": [
+      {
+        "name": "submit_sql",
+        "description": "Submit the one SELECT statement that answers the question. It is run once against `t`, and the values in the first column of its result are the answer.",
+        "strict": true,
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "A single SELECT statement."
+            }
+          },
+          "required": [
+            "query"
+          ],
+          "additionalProperties": false
+        }
+      }
+    ]
+  }
+}
