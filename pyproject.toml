@@ -12,6 +12,9 @@ service = [
     "fastapi==0.115.0",
     "uvicorn==0.30.6",
     "pydantic==2.9.2",
+    "redis==8.1.0",
+    "prometheus-client==0.26.0",
+    "python-multipart==0.0.34",
 ]
 
 agent = [
@@ -28,6 +31,8 @@ tapas = [
 dev = [
     "pytest==9.2.0",
     "ruff==0.17.5",
+    "fakeredis[lua]==2.40.0",
+    "httpx==0.28.1",
 ]
 
 # CPU-only PyTorch on every platform: the default Linux wheel pulls in gigabytes of CUDA.
@@ -52,3 +57,7 @@ testpaths = ["tests"]
 [tool.ruff]
 line-length = 100
 src = ["src", "tests"]
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI declares request parameters with calls in argument defaults.
+extend-immutable-calls = ["fastapi.File"]
