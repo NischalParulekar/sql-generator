@@ -1,0 +1,170 @@
+system,id,label,notes
+rule_based,nu-2643,not_understood,SELECT * fallback
+rule_based,nu-2712,not_understood,SELECT * fallback
+rule_based,nu-814,misread_question,"COUNT(*) over the whole table; the condition ""team europe won"" is ignored"
+rule_based,nu-2463,not_understood,SELECT * fallback
+rule_based,nu-4090,not_understood,SELECT * fallback
+rule_based,nu-3130,misread_question,COUNT(*) over the whole table; the writer condition is ignored
+rule_based,nu-1742,not_understood,SELECT * fallback
+rule_based,nu-3047,not_understood,SELECT * fallback; a yes/no question
+rule_based,nu-2197,not_understood,SELECT * fallback
+rule_based,nu-1523,misread_question,COUNT(*) over the whole table; the featuring condition is ignored
+rule_based,nu-2972,not_understood,SELECT * fallback
+rule_based,nu-2050,not_understood,SELECT * fallback
+rule_based,nu-2816,misread_question,"Part of the question became a literal filter value: route = 'listed directly above ...'"
+rule_based,nu-2965,misread_question,COUNT(*) over the whole table; the 2012 condition is ignored
+rule_based,nu-4028,gold_questionable,"The table has 3 games against Japan; gold says 2"
+rule_based,nu-78,not_understood,SELECT * fallback
+rule_based,nu-2314,execution_error,"Invented column ""amount"""
+rule_based,nu-831,misread_question,COUNT(*) over the whole table; the competition condition is ignored
+rule_based,nu-3198,misread_question,COUNT(*) over the whole table; the country condition is ignored
+rule_based,nu-3388,not_understood,SELECT * fallback
+rule_based,nu-2763,execution_error,"Invented column ""country""; the condition became a literal value"
+rule_based,nu-394,misread_question,COUNT(*) over the whole table; a two-step lookup reduced to a row count
+rule_based,nu-4227,wrong_calculation,Counted rows instead of distinct winners
+rule_based,nu-361,not_understood,SELECT * fallback
+rule_based,nu-4305,not_understood,SELECT * fallback
+rule_based,nu-2740,not_understood,SELECT * fallback
+rule_based,nu-1429,not_understood,SELECT * fallback
+rule_based,nu-1419,not_understood,SELECT * fallback
+rule_based,nu-1882,misread_question,Counted rows instead of reading the attendance cell
+rule_based,nu-4228,not_understood,SELECT * fallback
+rule_based,nu-3457,misread_question,COUNT(*) over the whole table instead of reading two gold counts
+rule_based,nu-1263,misread_question,COUNT(*) over the whole table; the per-year condition is ignored
+rule_based,nu-2137,not_understood,SELECT * fallback
+rule_based,nu-2743,not_understood,SELECT * fallback
+rule_based,nu-4032,misread_question,COUNT(*) over the whole table instead of a per-year maximum
+rule_based,nu-3055,misread_question,COUNT(*) over the whole table instead of summing two players' goals
+rule_based,nu-1200,not_understood,SELECT * fallback; a yes/no question
+rule_based,nu-2876,not_understood,SELECT * fallback
+rule_based,nu-1916,not_understood,SELECT * fallback
+rule_based,nu-828,misread_question,"Sorted by ""winners"" but returned every row's first column; the 1970s condition is ignored"
+rule_based,nu-2411,misread_question,COUNT(*) over the whole table; the country condition is ignored
+rule_based,nu-517,wrong_rows,Sorted correctly but returned every row instead of the top one; the first item is right
+rule_based,nu-2573,misread_question,Counted rows instead of reading David Toms's score
+rule_based,nu-273,execution_error,"Invented column ""ranking"""
+rule_based,nu-2466,not_understood,SELECT * fallback; a more/less question
+rule_based,nu-1893,misread_question,COUNT(*) over the whole table instead of a filtered sum
+rule_based,nu-1981,execution_error,"Invented column ""points"""
+rule_based,nu-2726,misread_question,COUNT(*) over the whole table; the team and date conditions are ignored
+rule_based,nu-4002,misread_question,COUNT(*) over the whole table; the operator condition is ignored
+rule_based,nu-32,misread_question,COUNT(*) over the whole table; the first-place condition is ignored
+tapas,nu-3025,wrong_rows,Selected the wrong driver
+tapas,nu-2622,wrong_calculation,Counted 15 rows instead of 6 distinct regions
+tapas,nu-4309,wrong_rows,Selected 3 rows to count instead of all 19
+tapas,nu-1045,missing_context,Saw 12 of 19 rows; the answer row was dropped
+tapas,nu-4113,missing_context,Saw 29 of 46 rows; the count needs the whole table
+tapas,nu-3506,missing_context,Saw 23 of 35 rows; the count needs the whole table
+tapas,nu-476,misread_question,"Answered when (1979), not how long"
+tapas,nu-1579,missing_context,Saw 36 of 126 rows; neither hospital was among them
+tapas,nu-151,wrong_calculation,Needs a difference of two years; TAPAS has no subtraction operator
+tapas,nu-2972,wrong_column,"Averaged the shirt number instead of using ""Years for Jazz"""
+tapas,nu-2553,wrong_rows,Counted 3 vessels instead of 4
+tapas,nu-4156,wrong_rows,Selected Spain as well as Tunisia
+tapas,nu-727,wrong_rows,Selected two non-German drivers
+tapas,nu-54,wrong_rows,Selected a later winner instead of the first
+tapas,nu-1842,wrong_rows,Counted 5 singles instead of 3
+tapas,nu-3505,wrong_rows,Selected 2012 instead of 2008
+tapas,nu-3161,gold_questionable,"Seven conferences have 5 or more wins in the Record column; gold says 6"
+tapas,nu-1629,wrong_rows,Selected the wrong player
+tapas,nu-2952,wrong_rows,"Selected a nation row (""Norway (NOR)"") instead of a shooter"
+tapas,nu-2752,wrong_rows,Selected the wrong competition
+tapas,nu-2578,not_understood,A yes/no question; TAPAS can only return cells
+tapas,nu-1973,wrong_rows,Counted 11 teams instead of 6
+tapas,nu-1712,wrong_rows,Selected no cells at all
+tapas,nu-241,wrong_rows,Counted 2 rows instead of 9
+tapas,nu-1553,wrong_rows,Counted 1 leader instead of 2
+tapas,nu-638,wrong_calculation,Needs a difference; TAPAS has no subtraction operator and selected nothing
+tapas,nu-3955,wrong_rows,Selected episode 2; episode 1 has the higher share
+tapas,nu-443,missing_context,Saw 30 of 58 rows; the answer row was dropped
+tapas,nu-603,answer_form,"Same text as gold, but a line break before ""("" stops the official normalisation from treating it as a trailing detail"
+tapas,nu-1499,wrong_rows,Selected 2010 and 2011
+tapas,nu-333,wrong_calculation,Selected the right cell but applied COUNT instead of returning it
+tapas,nu-1055,missing_context,Saw 14 of 64 rows; the answer row was dropped
+tapas,nu-3204,wrong_rows,Counted every German Cup entry instead of the wins
+tapas,nu-3457,wrong_calculation,Selected the two right cells but applied COUNT instead of returning them
+tapas,nu-4150,wrong_rows,Counted 6 players instead of 5
+tapas,nu-2302,missing_context,Saw 31 of 58 rows; the count needs the whole table
+tapas,nu-2421,wrong_rows,Selected an extra track
+tapas,nu-3936,wrong_column,"Averaged ""In service"" (a fleet count) instead of reading the service period"
+tapas,nu-1848,missing_context,Saw 5 of 12 rows; the count needs the whole table
+tapas,nu-2450,wrong_calculation,Needs date arithmetic over year ranges; TAPAS counted the cells
+tapas,nu-3683,wrong_rows,Selected the wrong chord
+tapas,nu-3216,not_understood,A yes/no question; TAPAS can only return cells
+tapas,nu-100,wrong_rows,Selected the wrong player
+tapas,nu-2466,missing_context,Saw 14 of 64 rows; the question also needs a more/less answer TAPAS cannot give
+tapas,nu-733,missing_context,Saw 8 of 40 rows; the count needs the whole table
+tapas,nu-3021,wrong_calculation,"Selected the candidate cells but counted them; TAPAS has no maximum operator"
+tapas,nu-3474,wrong_calculation,"Selected the right cell but averaged it, and ""858 209"" does not parse as a number"
+tapas,nu-2615,wrong_calculation,Needs the most frequent value; TAPAS cannot group and count
+tapas,nu-3476,wrong_rows,Selected the wrong network
+tapas,nu-1939,wrong_rows,Selected the wrong player
+agent_haiku,nu-1181,misread_question,"Counted only speakers with a language given (31); gold counts every listed speaker (44)"
+agent_haiku,nu-2803,execution_error,"Ran out of turns; its last query returned the right count (8) but it never answered"
+agent_haiku,nu-2026,wrong_rows,Date-range filter missed one chief who served in the 1950s
+agent_haiku,nu-1689,gold_questionable,"Relative to today: gold counts to about 2014, the agent to the table's last year"
+agent_haiku,nu-2712,wrong_column,Read the organisation column instead of the award column
+agent_haiku,nu-1045,answer_form,"The right model, but with an explanation and a second model added"
+agent_haiku,nu-3644,answer_form,"""Cancún"" for ""Quintana Roo, Cancún"""
+agent_haiku,nu-476,misread_question,"Answered when (1979), not how long"
+agent_haiku,nu-1918,gold_questionable,"""Toggle"" is the name of the test series in the page title, not in the table"
+agent_haiku,nu-1579,answer_form,"""Duke University Hospital"" for ""Duke"""
+agent_haiku,nu-1586,misread_question,"Read ""ranked at least #4"" as rank #1 only (4); gold counts ranks #1 to #4 (9)"
+agent_haiku,nu-2197,answer_form,"""MG Creed C. Hammond"" for ""Creed C. Hammond"": the rank prefix was kept"
+agent_haiku,nu-2617,wrong_column,Gave the call signs instead of the station names
+agent_haiku,nu-1233,declined,"Said the founding year is not in the table; gold takes the first season, 1931, as the founding"
+agent_haiku,nu-2972,answer_form,"""2006-2007"" for ""1 year"": the span instead of its length"
+agent_haiku,nu-2553,misread_question,"Counted Lake Huron vessels with no lives lost; the question asks for vessels lost elsewhere"
+agent_haiku,nu-3317,wrong_calculation,Counted sponsor cells (21) instead of distinct sponsors (13)
+agent_haiku,nu-2177,gold_questionable,"Genk and Club Brugge both have 2 matches in the table, so the agent's 1 is right; gold says 0"
+agent_haiku,nu-3161,gold_questionable,"Seven conferences have 5 or more wins in the Record column; gold says 6"
+agent_haiku,nu-4202,answer_form,"9.6 years for ""10"": not rounded to whole years"
+agent_haiku,nu-1782,gold_questionable,The table has no location column; the agent correctly said so
+agent_haiku,nu-2214,declined,"Found the right row (Oceania) but refused because it is a region, not a country"
+agent_haiku,nu-904,wrong_rows,"Matched 4 towns on ""battle""-like words; gold has 2"
+agent_haiku,nu-2654,gold_questionable,"Results 87 and 88 also have consecutive encrypted numbers (48, 47), like 79 and 80"
+agent_haiku,nu-576,wrong_calculation,"Misread Australian-rules scores (""6.7 (43)"") when comparing points"
+agent_haiku,nu-1712,gold_questionable,"The question asks for an album; gold names the single on that row, the agent the album"
+agent_haiku,nu-361,answer_form,"""Hofmann"" for ""Alex Hofmann"""
+agent_haiku,nu-4028,gold_questionable,"The table has 3 games against Japan, which is the agent's answer; gold says 2"
+agent_haiku,nu-1370,answer_form,"""at New York Giants"" for ""New York Giants"": the cell's ""at"" was kept"
+agent_haiku,nu-3792,hallucinated_value,"The table has opponents' names, not countries; the agent guessed nationalities and got Poland"
+agent_haiku,nu-443,wrong_rows,Included rows where the West Indies were the opposing team
+agent_haiku,nu-310,gold_questionable,"Relative to today: first game 1924; gold 70, the agent 101"
+agent_haiku,nu-1429,wrong_rows,Picked the last row overall (a Republican) instead of the last Democrat
+agent_haiku,nu-1499,gold_questionable,"Ambiguous question; the agent listed every season with at most 179.5 points, a literal reading"
+agent_haiku,nu-1290,wrong_calculation,"Date arithmetic over three ranges ending in ""present"" came to 12; gold 14"
+agent_haiku,nu-1601,wrong_calculation,"Its own query showed 25 distinct presidents, but it answered 24"
+agent_haiku,nu-46,gold_questionable,"The table has 22 rows and 12 or 13 distinct models; gold 20 matches neither"
+agent_haiku,nu-1538,misread_question,"Counted only ""Nominated"" results; awards won were nominations too"
+agent_haiku,nu-1975,gold_questionable,"The exact average is 70223.75; gold drops the fraction"
+agent_haiku,nu-3228,gold_questionable,"Three terms add to 11 years; gold 12 counts years inclusively"
+agent_haiku,nu-2550,missing_context,"Accessibility was shown with icons on the page, which are not in the table text"
+agent_haiku,nu-2929,gold_questionable,"Each round had two races, so 12 races is defensible; gold counts the 6 rounds"
+agent_haiku,nu-4150,wrong_rows,Counted 2 consecutive defence picks instead of 5
+agent_haiku,nu-4166,wrong_rows,Included a driver who did not start (DNS) as retired
+agent_haiku,nu-2838,gold_questionable,"Relative to today: ship ages counted to the present give 16; gold, written earlier, 14"
+agent_haiku,nu-2827,answer_form,"7 for ""7 days"""
+agent_haiku,nu-2638,gold_questionable,"Times are minutes:seconds, so no one took 5 hours; gold counts those under 5 minutes"
+agent_haiku,nu-2469,wrong_calculation,Picked the wrong pair of times for best and worst finish
+agent_haiku,nu-3576,wrong_rows,"Skipped Denver, which has no American flight and more passengers than San Francisco"
+agent_haiku,nu-2313,wrong_rows,Added South Africa
+agent_haiku,nu-4214,misread_question,Counted distinct dates (4) instead of the span from first to last (12 days)
+agent_haiku,nu-1009,answer_form,"4 for ""£4.00"""
+agent_haiku,nu-922,wrong_rows,Added Wyckoff
+agent_haiku,nu-2450,gold_questionable,"Relative to today: 1986 to the present gives 39 years; gold, written earlier, 28"
+agent_haiku,nu-3278,gold_questionable,"The table is a boxing record with no spouses in it; the agent correctly said so"
+agent_haiku,nu-3965,answer_form,"119 for ""119 episodes"""
+agent_haiku,nu-1936,wrong_rows,Missed one theme that refers to culture
+agent_haiku,nu-4167,gold_questionable,"The table has no country column (and the question says ""county""); the agent correctly said so"
+agent_haiku,nu-3373,answer_form,"""1.2 billion"" for ""$1.2 billion"""
+agent_haiku,nu-858,gold_questionable,"Gold is her first-elected year; the question asks when she was last elected, and 2000 is right"
+agent_haiku,nu-3829,wrong_rows,Added the champion before Pulgarcito
+agent_haiku,nu-2085,answer_form,"""Maze by Gordon Ramsay"" for ""Maze"""
+agent_haiku,nu-4131,gold_questionable,"Honda appears 14 times in the table, which is the agent's answer; gold says 13"
+agent_haiku,nu-2170,misread_question,"Read ""last and current"" as two people; it is one, the current chief"
+agent_haiku,nu-3821,answer_form,"A sentence (about 12 years 7 months) for ""13 years"""
+agent_haiku,nu-1471,wrong_calculation,"Term lengths from text years came to 6 terms of 4+ years; gold 7"
+agent_haiku,nu-2522,wrong_calculation,"Summing year spans for Errea came to 7; gold 16"
+agent_haiku,nu-689,answer_form,"The right game in a sentence; gold has two items, the date and the opponent"
+agent_haiku,nu-534,wrong_calculation,"Summed shared-kill credits (1.5) instead of counting aircraft (2)"
