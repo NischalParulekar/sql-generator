@@ -1,0 +1,7 @@
+# Overlay for load tests only: every request comes from one address (the load
+# generator), so the per-address rate limit is lifted. Never use this for a deployment.
+services:
+  api:
+    environment:
+      RATE_CAPACITY: "1000000000"
+      RATE_REFILL_PER_S: "1000000000"
