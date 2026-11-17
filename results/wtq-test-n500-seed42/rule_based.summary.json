@@ -1,0 +1,17 @@
+{
+  "system": "rule_based",
+  "dataset": "wtq",
+  "split": "test",
+  "seed": 42,
+  "n": 500,
+  "correct": 25,
+  "accuracy": 0.05,
+  "errors": 54,
+  "no_answer": 62,
+  "latency_ms_p50": 21.62529999986873,
+  "latency_ms_p95": 26.988210004128636,
+  "cost_usd_per_1k": 0.0,
+  "tokens": 0,
+  "cost_usd": 0.0,
+  "stopped_at_cost_cap": false
+}

@@ -1,0 +1,17 @@
+{
+  "system": "tapas",
+  "dataset": "wtq",
+  "split": "test",
+  "seed": 42,
+  "n": 500,
+  "correct": 229,
+  "accuracy": 0.458,
+  "errors": 0,
+  "no_answer": 28,
+  "latency_ms_p50": 423.12144999959855,
+  "latency_ms_p95": 845.927024995035,
+  "cost_usd_per_1k": 0.0,
+  "tokens": 0,
+  "cost_usd": 0.0,
+  "stopped_at_cost_cap": false
+}
