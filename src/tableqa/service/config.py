@@ -14,8 +14,11 @@ class Settings:
     # Systems the service offers. TAPAS needs the heavy optional dependencies.
     systems: list[str] = field(default_factory=lambda: ["rule_based", "agent_haiku"])
     cors_origins: list[str] = field(default_factory=lambda: ["http://localhost:3000"])
-    # Behind a reverse proxy, the client address is the first X-Forwarded-For entry.
-    trust_proxy: bool = False
+    # Behind reverse proxies, how many of them to trust. Each appends the address it
+    # received from to X-Forwarded-For, so the client is the entry `proxy_hops` from
+    # the right; entries further left were written by the client and can be forged.
+    # 0 ignores the header and uses the connecting address.
+    proxy_hops: int = 0
 
     max_question_chars: int = 500
     max_upload_bytes: int = 2_000_000
@@ -48,7 +51,7 @@ class Settings:
             redis_url=env("REDIS_URL", cls.redis_url),
             systems=_list("TABLEQA_SYSTEMS", "rule_based,agent_haiku"),
             cors_origins=_list("CORS_ORIGINS", "http://localhost:3000"),
-            trust_proxy=env("TRUST_PROXY", "false").lower() == "true",
+            proxy_hops=int(env("PROXY_HOPS", "0")),
             daily_spend_cap_usd=float(env("DAILY_SPEND_CAP_USD", cls.daily_spend_cap_usd)),
             rate_capacity=float(env("RATE_CAPACITY", cls.rate_capacity)),
             rate_refill_per_s=float(env("RATE_REFILL_PER_S", cls.rate_refill_per_s)),

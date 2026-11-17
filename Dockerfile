@@ -15,5 +15,6 @@ RUN uv run --no-sync python -m tableqa.data.wtq
 
 RUN useradd --create-home app && chown -R app /app
 USER app
+# Hosts such as Render say which port to listen on through PORT.
 EXPOSE 8000
-CMD ["uv", "run", "--no-sync", "uvicorn", "tableqa.service.app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "exec uv run --no-sync uvicorn tableqa.service.app:app --host 0.0.0.0 --port ${PORT:-8000}"]
