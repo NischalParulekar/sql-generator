@@ -117,6 +117,7 @@ def create_app(
         state.limits = {
             name: asyncio.Semaphore(settings.concurrency.get(name, 4)) for name in state.systems
         }
+        metrics.start_at_zero(state.systems)
         try:
             metrics.spend_today.set(await state.store.spend_today())
         except RedisError:
@@ -283,13 +284,14 @@ def create_app(
             elapsed = time.perf_counter() - started
             metrics.latency.labels(body.system, "hit").observe(elapsed)
             metrics.asks.labels(body.system, "cached").inc()
+            # Serving from the cache costs nothing; the stored cost was paid once.
             return AskResponse(
                 system=body.system,
                 table_id=body.table_id,
                 question=question,
                 cached=True,
                 latency_ms=elapsed * 1000,
-                **cached,
+                **{**cached, "cost_usd": 0.0, "tokens": 0},
             )
 
         if body.system in PAID:

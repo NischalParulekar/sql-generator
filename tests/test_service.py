@@ -87,6 +87,7 @@ def test_an_answer_is_cached_by_normalised_question_and_system():
         other = ask(client, "How many players?", system="tapas").json()
     assert first["cached"] is False and first["answer"] == ["3"] and first["trace"] == "SELECT 1"
     assert again["cached"] is True and again["answer"] == ["3"]
+    assert again["system_latency_ms"] == first["system_latency_ms"]
     assert other["cached"] is False
     assert systems["rule_based"].calls == 1 and systems["tapas"].calls == 1
 
@@ -255,3 +256,26 @@ def test_the_original_sql_generator_endpoint_still_works():
     with client:
         r = client.post("/generate-sql", json={"prompt": "show all users"})
     assert " ".join(r.json()["sql"].split()) == "SELECT * FROM users;"
+
+
+def test_a_cached_answer_costs_nothing_to_serve():
+    client, _ = make(agent_haiku=FakeSystem("agent_haiku", cost=0.002))
+    with client:
+        fresh = ask(client, "q1", system="agent_haiku").json()
+        cached = ask(client, "q1", system="agent_haiku").json()
+        text = client.get("/metrics").text
+    assert (fresh["cost_usd"], fresh["tokens"]) == (0.002, 100)
+    assert (cached["cost_usd"], cached["tokens"]) == (0.0, 0)
+    assert "tableqa_llm_spend_today_usd 0.002" in text
+
+
+def test_every_series_starts_at_zero_so_rates_see_the_first_events():
+    client, _ = make(rule_based=FakeSystem("rule_based"), agent_haiku=FakeSystem("agent_haiku"))
+    with client:
+        text = client.get("/metrics").text
+    for system in ("rule_based", "agent_haiku"):
+        for outcome in ("answered", "cached", "failed", "rate_limited", "spend_capped"):
+            assert f'tableqa_ask_total{{outcome="{outcome}",system="{system}"}} 0.0' in text
+        assert f'tableqa_ask_latency_seconds_count{{cache="hit",system="{system}"}} 0.0' in text
+        assert f'tableqa_llm_tokens_total{{system="{system}"}} 0.0' in text
+    assert 'tableqa_table_uploads_total{outcome="stored"} 0.0' in text
