@@ -40,7 +40,7 @@ def _tapas(variant: str) -> System:
     return TapasSystem(variant)
 
 
-def _agent(name: str, model: str) -> System:
+def _agent(name: str, model: str, **options) -> System:
     # Imported on demand: the agent needs the optional anthropic dependency and an API
     # key, which is read from the environment or from a git-ignored .env file.
     from dotenv import load_dotenv
@@ -48,7 +48,11 @@ def _agent(name: str, model: str) -> System:
     from tableqa.systems.llm_agent.system import LLMAgentSystem
 
     load_dotenv()
-    return LLMAgentSystem(name, model)
+    return LLMAgentSystem(name, model, **options)
+
+
+def _haiku(name: str, **options) -> Callable[[], System]:
+    return functools.partial(_agent, name, "claude-haiku-5-5", **options)
 
 
 SYSTEMS: dict[str, Callable[[], System]] = {
@@ -56,7 +60,14 @@ SYSTEMS: dict[str, Callable[[], System]] = {
     "tapas": functools.partial(_tapas, "tapas"),
     "tapas_chunked": functools.partial(_tapas, "tapas_chunked"),
     "tapas_chunked_routed": functools.partial(_tapas, "tapas_chunked_routed"),
-    "agent_haiku": functools.partial(_agent, "agent_haiku", "claude-haiku-5-5"),
+    "agent_haiku": _haiku("agent_haiku"),
+    # Context-engineering variants: each changes one thing from agent_haiku. The rerun
+    # is agent_haiku unchanged, to measure how much two identical runs differ.
+    "agent_haiku_rerun": _haiku("agent_haiku_rerun"),
+    "agent_haiku_no_samples": _haiku("agent_haiku_no_samples", samples=False),
+    "agent_haiku_profile": _haiku("agent_haiku_profile", profile=True),
+    "agent_haiku_check": _haiku("agent_haiku_check", check_answer=True),
+    "agent_haiku_single_shot": _haiku("agent_haiku_single_shot", single_shot=True),
 }
 
 
