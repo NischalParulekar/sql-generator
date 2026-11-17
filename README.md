@@ -12,12 +12,49 @@ Every system answers through one interface, generated SQL runs in a locked-down 
 sandbox, and answers are scored by denotation match on
 [WikiTableQuestions](https://github.com/ppasupat/WikiTableQuestions) (WTQ).
 
-**Status:** work in progress. All three systems have run on the dev subset and on the
-synthetic large-table test, and four context-engineering variants of the agent have
-been measured. Still to come: the held-out test split, the failure taxonomy and the
+**Status:** work in progress. All three systems have been measured on the held-out test
+split, the dev subset and a synthetic large-table test, and four context-engineering
+variants of the agent have been compared. Still to come: the failure taxonomy and the
 service.
 
-## Results so far
+## Results
+
+### Held-out test split
+
+WTQ **test** subset: 500 questions sampled with seed 42 from `pristine-unseen-tables`,
+whose tables appear nowhere in WTQ's training data. Each system ran on it once, after
+its design had been frozen on the dev subset.
+
+| System | Accuracy (95% CI) | Table fits in 512 tokens (379 q) | Table does not fit (121 q) | Latency p50 / p95 | Cost per 1k |
+|---|---|---|---|---|---|
+| Rule-based | 5.0% (25), 3.4–7.3% | 4.7% | 5.8% | 22 ms / 27 ms | $0 |
+| TAPAS, truncated | 45.8% (229), 41.5–50.2% | 51.2% | 28.9% | 423 ms / 846 ms | $0 |
+| TAPAS, chunked (union) | 41.0% (205), 36.8–45.4% | 51.2% | 9.1% | 813 ms / 5,263 ms | $0 |
+| TAPAS, chunked (routed) | 46.0% (230), 41.7–50.4% | 51.2% | 29.8% | 429 ms / 2,977 ms | $0 |
+| LLM agent (Haiku 5.5) | **86.2%** (431), 82.9–88.9% | 87.6% | 81.8% | 5.7 s / 8.4 s | $0.48 |
+
+The intervals are Wilson 95% intervals for 500 questions.
+
+- **The agent nearly doubles TAPAS on unseen tables.** It is right on 214 questions
+  that TAPAS (truncated) gets wrong and wrong on 12 that TAPAS gets right; 57 defeat
+  both. The whole run cost $0.24.
+- **The dev results held up.** Every system lands within 1 to 4 points of its dev score
+  and the ranking is unchanged. TAPAS's fine-tuning on the data dev comes from inflated
+  it less than feared: 1.4 points for the truncated variant, 2.4 for the routed one.
+- **Large tables:** the agent loses 6 points on tables too big for TAPAS's window;
+  TAPAS loses 21 at best.
+- **Routed chunking ties truncation** (230 against 229). Its small lead on dev was noise,
+  as suspected. Union chunking is still the worst variant.
+- **Two caveats remain for the agent.** WTQ, test tables included, has been public since
+  2015, so the model may have seen these questions in training; the synthetic test shows
+  the agent does not need memorisation, but cannot rule it out here. And this is one
+  run: two runs of the identical agent differ on about 20 questions of 500 (see the
+  context-engineering section), roughly a point of accuracy.
+
+### Dev subset
+
+Every design decision was made on this subset, so it is not the headline result. TAPAS
+was fine-tuned on the data it comes from.
 
 WTQ **dev** subset: 500 questions sampled with seed 42 from `random-split-1-dev`.
 
@@ -28,20 +65,6 @@ WTQ **dev** subset: 500 questions sampled with seed 42 from `random-split-1-dev`
 | TAPAS, chunked (union) | 45.0% (225) | 55.3% (210) | 12.5% (15) | 532 ms / 2,715 ms | $0 |
 | TAPAS, chunked (routed) | **48.4%** (242) | 55.3% (210) | 26.7% (32) | 413 ms / 2,122 ms | $0 |
 | LLM agent (Haiku 5.5) | **87.0%** (435) | 88.9% (338) | 80.8% (97) | 4.0 s / 6.1 s | $0.47 |
-
-**This table is not a fair comparison yet. Read it with three caveats.**
-
-- *TAPAS is inflated.* The dev split is carved out of WTQ's training data, which this
-  TAPAS checkpoint was fine-tuned on.
-- *The agent may be inflated too.* WTQ has been public since 2015, so a current LLM may
-  have seen these questions and answers in training. That cannot be ruled out on any
-  split of a public benchmark. The synthetic large-table test below cannot have been
-  seen, but it is much easier than WTQ, so it does not settle the question.
-- *The agent's runs are not repeatable.* Current Claude models accept no sampling
-  temperature. Of 20 questions answered in two separate runs, 2 changed from right to
-  wrong. The 87.0% is one run, not an average.
-
-The cross-system comparison will be made on the held-out test split.
 
 What the numbers say:
 
@@ -86,11 +109,12 @@ Latency is measured on a laptop CPU and is noisy: the two chunked variants do th
 model work, yet their timings differ by about 20% between runs. For the rule-based
 system it includes loading the table into DuckDB per question; for TAPAS it excludes
 loading the model; for the agent it is dominated by network round trips to the API.
-The agent's cost is computed from the token usage the API reported, at list prices.
+The agent's cost is computed from the token usage the API reported, at list prices. Its
+test run was slower than its dev run (5.7 s against 4.0 s median) with the same model
+and prompt, which points to network conditions rather than the questions.
 
 Raw predictions for every question are in [`results/`](results/), so anyone can re-score
-them. Numbers on the WTQ **test** split are deliberately not reported yet: test is held
-back until all three systems are frozen.
+them.
 
 ## Large-table stress test
 
