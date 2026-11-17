@@ -126,8 +126,7 @@ def run_and_save(
             f.flush()
             records.append(record)
             spent += record["cost_usd"]
-            # run() records a crash as an error with no SQL or trace at all.
-            crashed = record["error"] is not None and record["sql_or_trace"] is None
+            crashed = is_crash(record)
             crashes_in_a_row = crashes_in_a_row + 1 if crashed else 0
             if crashes_in_a_row == MAX_CRASHES_IN_A_ROW:
                 raise SystemExit(
@@ -138,6 +137,34 @@ def run_and_save(
                 print(f"cost cap: ${spent:.4f} spent, stopping", file=sys.stderr)
                 return records, True
     return records, False
+
+
+def is_crash(record: dict) -> bool:
+    """run() records a crash as an error with no SQL or trace at all."""
+    return record["error"] is not None and record["sql_or_trace"] is None
+
+
+def retry_crashed(
+    system: System,
+    examples: list[Example],
+    get_table: Callable[[str], Table],
+    path: Path,
+) -> tuple[list[dict], int]:
+    """Re-answer the questions a saved run crashed on, keeping every other answer.
+
+    A crash (a dropped connection, an API outage) is a failure of the run, not an answer
+    the system gave, so the question is asked again. Returns (records, number retried).
+    """
+    with open(path, encoding="utf-8") as f:
+        records = [json.loads(line) for line in f]
+    by_id = {e.id: e for e in examples}
+    crashed = [i for i, r in enumerate(records) if is_crash(r)]
+    retried = list(run(system, [by_id[records[i]["id"]] for i in crashed], get_table))
+    for i, record in zip(crashed, retried):
+        records[i] = record
+    with open(path, "w", encoding="utf-8") as f:
+        f.writelines(json.dumps(r, ensure_ascii=False) + "\n" for r in records)
+    return records, len(crashed)
 
 
 def summarize(records: list[dict]) -> dict:
@@ -178,6 +205,11 @@ def main() -> None:
         type=float,
         help="stop once the run has spent this many US dollars (paid systems only)",
     )
+    parser.add_argument(
+        "--retry-crashed",
+        action="store_true",
+        help="re-answer only the questions an earlier run of this system crashed on",
+    )
     args = parser.parse_args()
 
     if args.dataset == "wtq":
@@ -198,13 +230,15 @@ def main() -> None:
 
     out_dir = args.out / run_name
     out_dir.mkdir(parents=True, exist_ok=True)
-    records, stopped_at_cost_cap = run_and_save(
-        system,
-        examples,
-        get_table,
-        out_dir / f"{system.name}.predictions.jsonl",
-        args.max_cost,
-    )
+    path = out_dir / f"{system.name}.predictions.jsonl"
+    crashes_retried = 0
+    if args.retry_crashed:
+        records, crashes_retried = retry_crashed(system, examples, get_table, path)
+        stopped_at_cost_cap = len(records) < len(examples)
+    else:
+        records, stopped_at_cost_cap = run_and_save(
+            system, examples, get_table, path, args.max_cost
+        )
 
     summary = {
         "system": system.name,
@@ -212,6 +246,7 @@ def main() -> None:
         **summarize(records),
         "cost_usd": sum(r["cost_usd"] for r in records),
         "stopped_at_cost_cap": stopped_at_cost_cap,
+        **({"crashes_retried": crashes_retried} if crashes_retried else {}),
     }
     if hasattr(system, "config"):
         summary["config"] = system.config
