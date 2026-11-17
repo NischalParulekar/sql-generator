@@ -206,3 +206,24 @@ def test_untyped_questions_add_no_type_fields():
     )
     assert "type" not in records[0]
     assert "by_type" not in summarize(records)
+
+
+def test_retry_crashed_reanswers_only_the_crashed_questions(tmp_path):
+    from tableqa.eval.runner import retry_crashed
+
+    examples = [Example(f"id{i}", f"q{i}", "players", ("a",)) for i in range(4)]
+    path = tmp_path / "predictions.jsonl"
+    # First run: q1 and q2 crash (no script line), q0 and q3 are answered.
+    first = ScriptedSystem({"q0": (["a"], 1.0), "q3": (["b"], 1.0)})
+    run_and_save(first, examples, {"players": TABLE}.__getitem__, path)
+
+    # Second run could answer everything, but only the crashed questions are asked.
+    second = ScriptedSystem({f"q{i}": (["a"], 2.0) for i in range(4)})
+    records, retried = retry_crashed(second, examples, {"players": TABLE}.__getitem__, path)
+
+    assert retried == 2
+    assert [r["id"] for r in records] == ["id0", "id1", "id2", "id3"]
+    assert [r["latency_ms"] for r in records] == [1.0, 2.0, 2.0, 1.0]
+    assert [r["correct"] for r in records] == [True, True, True, False]
+    saved = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+    assert saved == records
