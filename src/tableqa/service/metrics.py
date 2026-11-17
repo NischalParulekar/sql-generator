@@ -5,6 +5,9 @@ from prometheus_client import CollectorRegistry, Counter, Gauge, Histogram
 LATENCY_BUCKETS = (0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 20, 40, 90)
 
 
+OUTCOMES = ("answered", "cached", "failed", "rate_limited", "spend_capped")
+
+
 class Metrics:
     def __init__(self):
         self.registry = CollectorRegistry()
@@ -44,6 +47,20 @@ class Metrics:
         self.uploads = Counter(
             "tableqa_table_uploads_total", "CSV uploads, by outcome.", ["outcome"], registry=r
         )
+
+    def start_at_zero(self, systems) -> None:
+        """Create every labelled series at zero. A series that first appears with a
+        non-zero value has no starting point, so rate() and increase() miss what it
+        counted before Prometheus first saw it."""
+        for system in systems:
+            for outcome in OUTCOMES:
+                self.asks.labels(system, outcome)
+            for cache in ("hit", "miss"):
+                self.latency.labels(system, cache)
+            self.tokens.labels(system)
+            self.cost.labels(system)
+        for outcome in ("stored", "rejected", "too_large"):
+            self.uploads.labels(outcome)
 
 
 def sandbox_error_kinds(prediction) -> list[str]:
