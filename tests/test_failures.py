@@ -54,7 +54,8 @@ def test_committed_first_pass_covers_exactly_the_sample():
 
 
 def test_committed_review_file_matches_the_first_pass():
-    rows = [json.loads(line) for line in open("results/failures/review.jsonl", encoding="utf-8")]
+    with open("results/failures/review.jsonl", encoding="utf-8") as file:
+        rows = [json.loads(line) for line in file]
     labels = f.read_labels(Path("results/failures/first_pass.csv"))
     assert len(rows) == len(labels) == 169
     assert all(labels[(r["system"], r["id"])][0] == r["first_pass"] for r in rows)
