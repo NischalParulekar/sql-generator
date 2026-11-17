@@ -460,6 +460,34 @@ cd frontend && npm install && npm run dev   # the UI on http://localhost:3000
 In development the UI proxies API calls to port 8000; a deployed build reads the API's
 address from `VITE_API_URL`.
 
+### Deployment
+
+**Recorded demo (live now, free).** GitHub Pages serves the UI at
+https://nischalparulekar.github.io/tableqa/ in replay mode: it shows the answers and
+traces each system gave in the committed benchmark runs, for eight WTQ dev tables and the
+100,000-row generated table, right or wrong. It needs no server and no API key. The
+`Pages` workflow rebuilds it whenever the frontend changes; `scripts/build_demo.py`
+rebuilds the bundle it replays.
+
+**Live API (free, one-time setup).** `render.yaml` is a Render Blueprint for the API and
+a Redis-compatible Key Value instance, both on Render's free plan:
+
+1. In Render, choose New, then Blueprint, and pick this repository. Render asks for
+   `ANTHROPIC_API_KEY`; use a key made for this service, with a monthly spend limit set
+   in the Anthropic Console. That limit is the hard ceiling: the free Key Value instance
+   keeps no data across restarts, which resets the service's own daily counter.
+2. When the deploy finishes, open `https://<service>.onrender.com/healthz`.
+3. In this repository's settings, add the Actions variable `API_URL` with the service's
+   address and re-run the `Pages` workflow. The site then calls the live API instead of
+   replaying recordings.
+
+The free web service sleeps after 15 minutes without traffic and takes about a minute to
+wake, so the first question after a quiet spell is slow. The service's own guards still
+apply: $0.50 a day of agent spend, per-address rate limits, and cached answers served
+free. Behind Render's proxy the client address is read from `X-Forwarded-For` with
+`PROXY_HOPS=1`, so a client cannot dodge the rate limit by writing its own header;
+check one request's header after deploying in case Render adds another hop.
+
 ### Load test
 
 [Locust](https://locust.io) drove the service with users sending questions back to back,

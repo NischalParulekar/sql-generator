@@ -1,5 +1,7 @@
-# Publishes the recorded demo (frontend in replay mode) to GitHub Pages. It needs no
-# server and no API key: answers come from frontend/public/demo.json.
+# Publishes the UI to GitHub Pages. With no API_URL repository variable it builds the
+# recorded demo, which replays frontend/public/demo.json and needs no server or key.
+# Set the repository variable API_URL to a deployed API's address (for example the
+# Render service from render.yaml) and it builds the live UI instead.
 name: Pages
 
 on:
@@ -27,10 +29,11 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-      - name: Build the recorded demo
+      - name: Build the UI (recorded unless API_URL is set)
         working-directory: frontend
         env:
-          VITE_RECORDED: "1"
+          VITE_RECORDED: ${{ vars.API_URL == '' && '1' || '0' }}
+          VITE_API_URL: ${{ vars.API_URL }}
           VITE_BASE: /${{ github.event.repository.name }}/
         run: |
           npm ci

@@ -1,0 +1,41 @@
+# Render Blueprint for the live API: one free Docker web service and one free Key Value
+# (Redis-compatible) instance. Render asks for ANTHROPIC_API_KEY when the Blueprint is
+# created; it is never stored in this repository.
+#
+# Free-tier limits that matter here: the web service sleeps after 15 minutes without
+# traffic and takes about a minute to wake; the free Key Value instance keeps no data
+# across restarts, which clears the cache and today's spend counter. Set a spend limit
+# in the Anthropic Console as well; that is the hard ceiling.
+services:
+  - type: web
+    name: tableqa-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /healthz
+    envVars:
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: tableqa-redis
+          property: connectionString
+      - key: TABLEQA_SYSTEMS
+        value: rule_based,agent_haiku
+      - key: DAILY_SPEND_CAP_USD
+        value: "0.50"
+      - key: CORS_ORIGINS
+        value: https://nischalparulekar.github.io
+      # Render's load balancer appends the client's address to X-Forwarded-For. Check
+      # one request's header after deploying; if another proxy sits in front, raise this.
+      - key: PROXY_HOPS
+        value: "1"
+      - key: ANTHROPIC_API_KEY
+        sync: false
+
+  - type: keyvalue
+    name: tableqa-redis
+    plan: free
+    # Evicting keys could clear the spend counter or rate limits; refuse writes instead.
+    maxmemoryPolicy: noeviction
+    # Empty: no connections from the public internet, only from Render services.
+    ipAllowList: []
