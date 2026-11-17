@@ -12,10 +12,15 @@ Every system answers through one interface, generated SQL runs in a locked-down 
 sandbox, and answers are scored by denotation match on
 [WikiTableQuestions](https://github.com/ppasupat/WikiTableQuestions) (WTQ).
 
-**Status:** work in progress. All three systems have been measured on the held-out test
-split, the dev subset and a synthetic large-table test; four context-engineering
-variants of the agent have been compared; and 169 test failures have been labelled by
-cause. Still to come: the service and demo.
+**Demo:** https://nischalparulekar.github.io/tableqa/ replays each system's recorded
+answers and traces; nothing to install, no cost. The live API runs locally with
+`docker compose up` and deploys to Render's free tier (see [Deployment](#deployment)).
+
+**In short (held-out test split, 500 questions):** the Claude agent answers 86.2%, TAPAS
+46.0% at best and the rule-based engine 5.0%, for $0.48 per 1,000 questions. Half of the
+agent's failures turn out to be problems with the benchmark's own answers or with the
+form of a right answer. The service behind the demo caches answers in Redis, rate-limits
+and caps daily LLM spend, and serves 422 cached answers a second at 85 ms p95 on a laptop.
 
 ## Results
 
