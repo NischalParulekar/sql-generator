@@ -1,0 +1,170 @@
+system,id,label,notes,agreed_with_first_pass,reviewed_at
+rule_based,nu-2643,not_understood,SELECT * fallback,true,2026-11-17T17:15:18.992Z
+rule_based,nu-2712,not_understood,SELECT * fallback,true,2026-11-17T17:15:21.340Z
+rule_based,nu-814,misread_question,"COUNT(*) over the whole table; the condition ""team europe won"" is ignored",true,2026-11-17T17:15:26.582Z
+rule_based,nu-2463,not_understood,SELECT * fallback,true,2026-11-17T17:15:28.889Z
+rule_based,nu-4090,not_understood,SELECT * fallback,true,2026-11-17T17:15:30.715Z
+rule_based,nu-3130,misread_question,COUNT(*) over the whole table; the writer condition is ignored,true,2026-11-17T17:15:32.579Z
+rule_based,nu-1742,not_understood,SELECT * fallback,true,2026-11-17T17:15:34.477Z
+rule_based,nu-3047,not_understood,SELECT * fallback; a yes/no question,true,2026-11-17T17:15:37.110Z
+rule_based,nu-2197,not_understood,SELECT * fallback,true,2026-11-17T17:15:39.546Z
+rule_based,nu-1523,misread_question,COUNT(*) over the whole table; the featuring condition is ignored,true,2026-11-17T17:15:41.494Z
+rule_based,nu-2972,not_understood,SELECT * fallback,true,2026-11-17T17:15:43.784Z
+rule_based,nu-2050,not_understood,SELECT * fallback,true,2026-11-17T17:15:45.660Z
+rule_based,nu-2816,misread_question,Part of the question became a literal filter value: route = 'listed directly above ...',true,2026-11-17T17:15:47.379Z
+rule_based,nu-2965,misread_question,COUNT(*) over the whole table; the 2012 condition is ignored,true,2026-11-17T17:15:49.285Z
+rule_based,nu-78,not_understood,SELECT * fallback,true,2026-11-17T17:15:51.114Z
+rule_based,nu-2314,execution_error,"Invented column ""amount""",true,2026-11-17T17:15:53.386Z
+rule_based,nu-831,misread_question,COUNT(*) over the whole table; the competition condition is ignored,true,2026-11-17T17:15:55.295Z
+rule_based,nu-3198,misread_question,COUNT(*) over the whole table; the country condition is ignored,true,2026-11-17T17:15:57.182Z
+rule_based,nu-3388,not_understood,SELECT * fallback,true,2026-11-17T17:15:59.362Z
+rule_based,nu-2763,execution_error,"Invented column ""country""; the condition became a literal value",true,2026-11-17T17:16:01.354Z
+rule_based,nu-394,misread_question,COUNT(*) over the whole table; a two-step lookup reduced to a row count,true,2026-11-17T17:16:03.414Z
+rule_based,nu-4227,wrong_calculation,Counted rows instead of distinct winners,true,2026-11-17T17:16:05.341Z
+rule_based,nu-361,not_understood,SELECT * fallback,true,2026-11-17T17:16:07.418Z
+rule_based,nu-4028,gold_questionable,The table has 3 games against Japan; gold says 2,true,2026-11-17T17:16:09.977Z
+rule_based,nu-4305,not_understood,SELECT * fallback,true,2026-11-17T17:16:12.012Z
+rule_based,nu-2740,not_understood,SELECT * fallback,true,2026-11-17T17:16:13.615Z
+rule_based,nu-1429,not_understood,SELECT * fallback,true,2026-11-17T17:16:15.910Z
+rule_based,nu-1419,not_understood,SELECT * fallback,true,2026-11-17T17:16:17.659Z
+rule_based,nu-1882,misread_question,Counted rows instead of reading the attendance cell,true,2026-11-17T17:16:19.591Z
+rule_based,nu-4228,not_understood,SELECT * fallback,true,2026-11-17T17:16:22.079Z
+rule_based,nu-3457,misread_question,COUNT(*) over the whole table instead of reading two gold counts,true,2026-11-17T17:16:24.155Z
+rule_based,nu-1263,misread_question,COUNT(*) over the whole table; the per-year condition is ignored,true,2026-11-17T17:16:26.738Z
+rule_based,nu-2137,not_understood,SELECT * fallback,true,2026-11-17T17:16:28.592Z
+rule_based,nu-2743,not_understood,SELECT * fallback,true,2026-11-17T17:16:31.949Z
+rule_based,nu-4032,misread_question,COUNT(*) over the whole table instead of a per-year maximum,true,2026-11-17T17:16:34.398Z
+rule_based,nu-3055,misread_question,COUNT(*) over the whole table instead of summing two players' goals,true,2026-11-17T17:16:36.262Z
+rule_based,nu-1200,not_understood,SELECT * fallback; a yes/no question,true,2026-11-17T17:16:38.267Z
+rule_based,nu-2876,not_understood,SELECT * fallback,true,2026-11-17T17:16:40.148Z
+rule_based,nu-1916,not_understood,SELECT * fallback,true,2026-11-17T17:16:41.851Z
+rule_based,nu-828,misread_question,"Sorted by ""winners"" but returned every row's first column; the 1970s condition is ignored",true,2026-11-17T17:16:43.830Z
+rule_based,nu-2411,misread_question,COUNT(*) over the whole table; the country condition is ignored,true,2026-11-17T17:16:45.547Z
+rule_based,nu-517,wrong_rows,Sorted correctly but returned every row instead of the top one; the first item is right,true,2026-11-17T17:16:48.409Z
+rule_based,nu-2573,misread_question,Counted rows instead of reading David Toms's score,true,2026-11-17T17:16:50.864Z
+rule_based,nu-273,execution_error,"Invented column ""ranking""",true,2026-11-17T17:16:52.516Z
+rule_based,nu-2466,not_understood,SELECT * fallback; a more/less question,true,2026-11-17T17:16:54.558Z
+rule_based,nu-1893,misread_question,COUNT(*) over the whole table instead of a filtered sum,true,2026-11-17T17:16:56.792Z
+rule_based,nu-1981,execution_error,"Invented column ""points""",true,2026-11-17T17:16:59.024Z
+rule_based,nu-2726,misread_question,COUNT(*) over the whole table; the team and date conditions are ignored,true,2026-11-17T17:17:01.010Z
+rule_based,nu-4002,misread_question,COUNT(*) over the whole table; the operator condition is ignored,true,2026-11-17T17:17:02.954Z
+rule_based,nu-32,misread_question,COUNT(*) over the whole table; the first-place condition is ignored,true,2026-11-17T17:17:06.530Z
+tapas,nu-3025,wrong_rows,Selected the wrong driver,true,2026-11-17T17:13:21.070Z
+tapas,nu-2622,wrong_calculation,Counted 15 rows instead of 6 distinct regions,true,2026-11-17T17:13:24.241Z
+tapas,nu-4309,wrong_rows,Selected 3 rows to count instead of all 19,true,2026-11-17T17:13:26.190Z
+tapas,nu-1045,missing_context,Saw 12 of 19 rows; the answer row was dropped,true,2026-11-17T17:13:29.337Z
+tapas,nu-4113,missing_context,Saw 29 of 46 rows; the count needs the whole table,true,2026-11-17T17:13:31.508Z
+tapas,nu-3506,missing_context,Saw 23 of 35 rows; the count needs the whole table,true,2026-11-17T17:13:33.770Z
+tapas,nu-476,misread_question,"Answered when (1979), not how long",true,2026-11-17T17:13:35.705Z
+tapas,nu-1579,missing_context,Saw 36 of 126 rows; neither hospital was among them,true,2026-11-17T17:13:37.773Z
+tapas,nu-151,wrong_calculation,Needs a difference of two years; TAPAS has no subtraction operator,true,2026-11-17T17:13:39.872Z
+tapas,nu-2972,wrong_column,"Averaged the shirt number instead of using ""Years for Jazz""",true,2026-11-17T17:13:42.505Z
+tapas,nu-2553,wrong_rows,Counted 3 vessels instead of 4,true,2026-11-17T17:13:44.657Z
+tapas,nu-4156,wrong_rows,Selected Spain as well as Tunisia,true,2026-11-17T17:13:46.975Z
+tapas,nu-727,wrong_rows,Selected two non-German drivers,true,2026-11-17T17:13:48.883Z
+tapas,nu-54,wrong_rows,Selected a later winner instead of the first,true,2026-11-17T17:13:51.012Z
+tapas,nu-1842,wrong_rows,Counted 5 singles instead of 3,true,2026-11-17T17:13:53.416Z
+tapas,nu-3505,wrong_rows,Selected 2012 instead of 2008,true,2026-11-17T17:13:55.491Z
+tapas,nu-3161,gold_questionable,Seven conferences have 5 or more wins in the Record column; gold says 6,true,2026-11-17T17:13:57.630Z
+tapas,nu-1629,wrong_rows,Selected the wrong player,true,2026-11-17T17:13:59.707Z
+tapas,nu-2952,wrong_rows,"Selected a nation row (""Norway (NOR)"") instead of a shooter",true,2026-11-17T17:14:01.798Z
+tapas,nu-2752,wrong_rows,Selected the wrong competition,true,2026-11-17T17:14:03.839Z
+tapas,nu-2578,not_understood,A yes/no question; TAPAS can only return cells,true,2026-11-17T17:14:05.709Z
+tapas,nu-1973,wrong_rows,Counted 11 teams instead of 6,true,2026-11-17T17:14:07.920Z
+tapas,nu-1712,wrong_rows,Selected no cells at all,true,2026-11-17T17:14:11.282Z
+tapas,nu-241,wrong_rows,Counted 2 rows instead of 9,true,2026-11-17T17:14:13.169Z
+tapas,nu-1553,wrong_rows,Counted 1 leader instead of 2,true,2026-11-17T17:14:15.118Z
+tapas,nu-638,wrong_calculation,Needs a difference; TAPAS has no subtraction operator and selected nothing,true,2026-11-17T17:14:17.821Z
+tapas,nu-3955,wrong_rows,Selected episode 2; episode 1 has the higher share,true,2026-11-17T17:14:19.837Z
+tapas,nu-443,missing_context,Saw 30 of 58 rows; the answer row was dropped,true,2026-11-17T17:14:21.938Z
+tapas,nu-603,answer_form,"Same text as gold, but a line break before ""("" stops the official normalisation from treating it as a trailing detail",true,2026-11-17T17:14:24.029Z
+tapas,nu-1499,wrong_rows,Selected 2010 and 2011,true,2026-11-17T17:14:26.172Z
+tapas,nu-333,wrong_calculation,Selected the right cell but applied COUNT instead of returning it,true,2026-11-17T17:14:28.171Z
+tapas,nu-1055,missing_context,Saw 14 of 64 rows; the answer row was dropped,true,2026-11-17T17:14:30.163Z
+tapas,nu-3204,wrong_rows,Counted every German Cup entry instead of the wins,true,2026-11-17T17:14:32.400Z
+tapas,nu-3457,wrong_calculation,Selected the two right cells but applied COUNT instead of returning them,true,2026-11-17T17:14:34.319Z
+tapas,nu-4150,wrong_rows,Counted 6 players instead of 5,true,2026-11-17T17:14:36.314Z
+tapas,nu-2302,missing_context,Saw 31 of 58 rows; the count needs the whole table,true,2026-11-17T17:14:38.239Z
+tapas,nu-2421,wrong_rows,Selected an extra track,true,2026-11-17T17:14:40.079Z
+tapas,nu-3936,wrong_column,"Averaged ""In service"" (a fleet count) instead of reading the service period",true,2026-11-17T17:14:42.173Z
+tapas,nu-1848,missing_context,Saw 5 of 12 rows; the count needs the whole table,true,2026-11-17T17:14:44.330Z
+tapas,nu-2450,wrong_calculation,Needs date arithmetic over year ranges; TAPAS counted the cells,true,2026-11-17T17:14:46.433Z
+tapas,nu-3683,wrong_rows,Selected the wrong chord,true,2026-11-17T17:14:48.386Z
+tapas,nu-3216,not_understood,A yes/no question; TAPAS can only return cells,true,2026-11-17T17:14:50.743Z
+tapas,nu-100,wrong_rows,Selected the wrong player,true,2026-11-17T17:14:52.737Z
+tapas,nu-2466,missing_context,Saw 14 of 64 rows; the question also needs a more/less answer TAPAS cannot give,true,2026-11-17T17:14:55.069Z
+tapas,nu-733,missing_context,Saw 8 of 40 rows; the count needs the whole table,true,2026-11-17T17:14:57.019Z
+tapas,nu-3021,wrong_calculation,Selected the candidate cells but counted them; TAPAS has no maximum operator,true,2026-11-17T17:14:59.147Z
+tapas,nu-3474,wrong_calculation,"Selected the right cell but averaged it, and ""858 209"" does not parse as a number",true,2026-11-17T17:15:01.416Z
+tapas,nu-2615,wrong_calculation,Needs the most frequent value; TAPAS cannot group and count,true,2026-11-17T17:15:03.594Z
+tapas,nu-3476,wrong_rows,Selected the wrong network,true,2026-11-17T17:15:05.644Z
+tapas,nu-1939,wrong_rows,Selected the wrong player,true,2026-11-17T17:15:13.811Z
+agent_haiku,nu-1181,misread_question,Counted only speakers with a language given (31); gold counts every listed speaker (44),true,2026-11-17T17:10:02.834Z
+agent_haiku,nu-2803,execution_error,Ran out of turns; its last query returned the right count (8) but it never answered,true,2026-11-17T08:26:52.825Z
+agent_haiku,nu-2026,wrong_rows,Date-range filter missed one chief who served in the 1950s,true,2026-11-17T08:27:00.050Z
+agent_haiku,nu-1689,gold_questionable,"Relative to today: gold counts to about 2014, the agent to the table's last year",true,2026-11-17T08:27:04.613Z
+agent_haiku,nu-2712,wrong_column,Read the organisation column instead of the award column,true,2026-11-17T08:27:38.997Z
+agent_haiku,nu-1045,answer_form,"The right model, but with an explanation and a second model added",true,2026-11-17T08:27:42.017Z
+agent_haiku,nu-3644,answer_form,"""Cancún"" for ""Quintana Roo, Cancún""",true,2026-11-17T08:27:44.698Z
+agent_haiku,nu-476,misread_question,"Answered when (1979), not how long",true,2026-11-17T08:27:47.429Z
+agent_haiku,nu-1918,gold_questionable,"""Toggle"" is the name of the test series in the page title, not in the table",true,2026-11-17T08:27:51.701Z
+agent_haiku,nu-1579,answer_form,"""Duke University Hospital"" for ""Duke""",true,2026-11-17T08:27:53.745Z
+agent_haiku,nu-1586,misread_question,"Read ""ranked at least #4"" as rank #1 only (4); gold counts ranks #1 to #4 (9)",true,2026-11-17T17:10:05.117Z
+agent_haiku,nu-2197,answer_form,"""MG Creed C. Hammond"" for ""Creed C. Hammond"": the rank prefix was kept",true,2026-11-17T17:10:07.325Z
+agent_haiku,nu-2617,wrong_column,Gave the call signs instead of the station names,true,2026-11-17T17:10:09.392Z
+agent_haiku,nu-1233,declined,"Said the founding year is not in the table; gold takes the first season, 1931, as the founding",true,2026-11-17T17:10:11.419Z
+agent_haiku,nu-2972,answer_form,"""2006-2007"" for ""1 year"": the span instead of its length",true,2026-11-17T17:10:13.594Z
+agent_haiku,nu-2553,misread_question,Counted Lake Huron vessels with no lives lost; the question asks for vessels lost elsewhere,true,2026-11-17T17:10:18.383Z
+agent_haiku,nu-3317,wrong_calculation,Counted sponsor cells (21) instead of distinct sponsors (13),true,2026-11-17T17:10:21.376Z
+agent_haiku,nu-2177,gold_questionable,"Genk and Club Brugge both have 2 matches in the table, so the agent's 1 is right; gold says 0",true,2026-11-17T17:10:24.278Z
+agent_haiku,nu-3161,gold_questionable,Seven conferences have 5 or more wins in the Record column; gold says 6,true,2026-11-17T17:10:26.242Z
+agent_haiku,nu-4202,answer_form,"9.6 years for ""10"": not rounded to whole years",true,2026-11-17T17:10:27.686Z
+agent_haiku,nu-1782,gold_questionable,The table has no location column; the agent correctly said so,true,2026-11-17T17:10:29.730Z
+agent_haiku,nu-2214,declined,"Found the right row (Oceania) but refused because it is a region, not a country",true,2026-11-17T17:10:31.938Z
+agent_haiku,nu-904,wrong_rows,"Matched 4 towns on ""battle""-like words; gold has 2",true,2026-11-17T17:10:34.419Z
+agent_haiku,nu-2654,gold_questionable,"Results 87 and 88 also have consecutive encrypted numbers (48, 47), like 79 and 80",true,2026-11-17T17:10:37.182Z
+agent_haiku,nu-576,wrong_calculation,"Misread Australian-rules scores (""6.7 (43)"") when comparing points",true,2026-11-17T17:10:56.787Z
+agent_haiku,nu-1712,gold_questionable,"The question asks for an album; gold names the single on that row, the agent the album",true,2026-11-17T17:11:02.771Z
+agent_haiku,nu-361,answer_form,"""Hofmann"" for ""Alex Hofmann""",true,2026-11-17T17:11:05.051Z
+agent_haiku,nu-4028,gold_questionable,"The table has 3 games against Japan, which is the agent's answer; gold says 2",true,2026-11-17T17:11:07.074Z
+agent_haiku,nu-1370,answer_form,"""at New York Giants"" for ""New York Giants"": the cell's ""at"" was kept",true,2026-11-17T17:11:09.083Z
+agent_haiku,nu-3792,hallucinated_value,"The table has opponents' names, not countries; the agent guessed nationalities and got Poland",true,2026-11-17T17:11:10.704Z
+agent_haiku,nu-443,wrong_rows,Included rows where the West Indies were the opposing team,true,2026-11-17T17:11:13.007Z
+agent_haiku,nu-310,gold_questionable,"Relative to today: first game 1924; gold 70, the agent 101",true,2026-11-17T17:11:15.140Z
+agent_haiku,nu-1429,wrong_rows,Picked the last row overall (a Republican) instead of the last Democrat,true,2026-11-17T17:11:27.464Z
+agent_haiku,nu-1499,gold_questionable,"Ambiguous question; the agent listed every season with at most 179.5 points, a literal reading",true,2026-11-17T17:11:30.133Z
+agent_haiku,nu-1290,wrong_calculation,"Date arithmetic over three ranges ending in ""present"" came to 12; gold 14",true,2026-11-17T17:11:32.742Z
+agent_haiku,nu-1601,wrong_calculation,"Its own query showed 25 distinct presidents, but it answered 24",true,2026-11-17T17:11:35.561Z
+agent_haiku,nu-46,gold_questionable,The table has 22 rows and 12 or 13 distinct models; gold 20 matches neither,true,2026-11-17T17:11:38.345Z
+agent_haiku,nu-1538,misread_question,"Counted only ""Nominated"" results; awards won were nominations too",true,2026-11-17T17:11:40.340Z
+agent_haiku,nu-1975,gold_questionable,The exact average is 70223.75; gold drops the fraction,true,2026-11-17T17:11:42.373Z
+agent_haiku,nu-3228,gold_questionable,Three terms add to 11 years; gold 12 counts years inclusively,true,2026-11-17T17:11:44.404Z
+agent_haiku,nu-2550,missing_context,"Accessibility was shown with icons on the page, which are not in the table text",true,2026-11-17T17:11:46.981Z
+agent_haiku,nu-2929,gold_questionable,"Each round had two races, so 12 races is defensible; gold counts the 6 rounds",true,2026-11-17T17:11:49.755Z
+agent_haiku,nu-4150,wrong_rows,Counted 2 consecutive defence picks instead of 5,true,2026-11-17T17:11:52.387Z
+agent_haiku,nu-4166,wrong_rows,Included a driver who did not start (DNS) as retired,true,2026-11-17T17:11:55.715Z
+agent_haiku,nu-2838,gold_questionable,"Relative to today: ship ages counted to the present give 16; gold, written earlier, 14",true,2026-11-17T17:11:57.702Z
+agent_haiku,nu-2827,answer_form,"7 for ""7 days""",true,2026-11-17T17:11:59.917Z
+agent_haiku,nu-2638,gold_questionable,"Times are minutes:seconds, so no one took 5 hours; gold counts those under 5 minutes",true,2026-11-17T17:12:02.304Z
+agent_haiku,nu-2469,wrong_calculation,Picked the wrong pair of times for best and worst finish,true,2026-11-17T17:12:05.174Z
+agent_haiku,nu-3576,wrong_rows,"Skipped Denver, which has no American flight and more passengers than San Francisco",true,2026-11-17T17:12:08.867Z
+agent_haiku,nu-2313,wrong_rows,Added South Africa,true,2026-11-17T17:12:11.371Z
+agent_haiku,nu-4214,misread_question,Counted distinct dates (4) instead of the span from first to last (12 days),true,2026-11-17T17:12:13.894Z
+agent_haiku,nu-1009,answer_form,"4 for ""£4.00""",true,2026-11-17T17:12:16.278Z
+agent_haiku,nu-922,wrong_rows,Added Wyckoff,true,2026-11-17T17:12:19.001Z
+agent_haiku,nu-2450,gold_questionable,"Relative to today: 1986 to the present gives 39 years; gold, written earlier, 28",true,2026-11-17T17:12:21.263Z
+agent_haiku,nu-3278,gold_questionable,The table is a boxing record with no spouses in it; the agent correctly said so,true,2026-11-17T17:12:22.991Z
+agent_haiku,nu-3965,answer_form,"119 for ""119 episodes""",true,2026-11-17T17:12:25.068Z
+agent_haiku,nu-1936,wrong_rows,Missed one theme that refers to culture,true,2026-11-17T17:12:28.169Z
+agent_haiku,nu-4167,gold_questionable,"The table has no country column (and the question says ""county""); the agent correctly said so",true,2026-11-17T17:12:30.540Z
+agent_haiku,nu-3373,answer_form,"""1.2 billion"" for ""$1.2 billion""",true,2026-11-17T17:12:32.758Z
+agent_haiku,nu-858,gold_questionable,"Gold is her first-elected year; the question asks when she was last elected, and 2000 is right",true,2026-11-17T17:12:34.924Z
+agent_haiku,nu-3829,wrong_rows,Added the champion before Pulgarcito,true,2026-11-17T17:12:38.791Z
+agent_haiku,nu-2085,answer_form,"""Maze by Gordon Ramsay"" for ""Maze""",true,2026-11-17T17:12:48.597Z
+agent_haiku,nu-4131,gold_questionable,"Honda appears 14 times in the table, which is the agent's answer; gold says 13",true,2026-11-17T17:12:50.567Z
+agent_haiku,nu-2170,misread_question,"Read ""last and current"" as two people; it is one, the current chief",true,2026-11-17T17:12:52.720Z
+agent_haiku,nu-3821,answer_form,"A sentence (about 12 years 7 months) for ""13 years""",true,2026-11-17T17:12:54.419Z
+agent_haiku,nu-1471,wrong_calculation,Term lengths from text years came to 6 terms of 4+ years; gold 7,true,2026-11-17T17:12:57.629Z
+agent_haiku,nu-2522,wrong_calculation,Summing year spans for Errea came to 7; gold 16,true,2026-11-17T17:13:04.400Z
+agent_haiku,nu-689,answer_form,"The right game in a sentence; gold has two items, the date and the opponent",true,2026-11-17T17:13:06.517Z
+agent_haiku,nu-534,wrong_calculation,Summed shared-kill credits (1.5) instead of counting aircraft (2),true,2026-11-17T17:13:13.013Z

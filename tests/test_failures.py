@@ -59,3 +59,15 @@ def test_committed_review_file_matches_the_first_pass():
     labels = f.read_labels(Path("results/failures/first_pass.csv"))
     assert len(rows) == len(labels) == 169
     assert all(labels[(r["system"], r["id"])][0] == r["first_pass"] for r in rows)
+
+
+def test_committed_reviewed_labels_cover_the_sample_and_tally():
+    reviewed = f.read_labels(Path("results/failures/reviewed.csv"))
+    first = f.read_labels(Path("results/failures/first_pass.csv"))
+    assert reviewed.keys() == first.keys()
+    counts = f.tally(reviewed)
+    assert {s: sum(c.values()) for s, c in counts.items()} == {
+        "agent_haiku": 69,
+        "tapas": 50,
+        "rule_based": 50,
+    }
