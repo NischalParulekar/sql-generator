@@ -1,0 +1,17 @@
+{
+  "system": "tapas_chunked_routed",
+  "dataset": "wtq",
+  "split": "test",
+  "seed": 42,
+  "n": 500,
+  "correct": 230,
+  "accuracy": 0.46,
+  "errors": 0,
+  "no_answer": 22,
+  "latency_ms_p50": 428.67884999577655,
+  "latency_ms_p95": 2976.563775001705,
+  "cost_usd_per_1k": 0.0,
+  "tokens": 0,
+  "cost_usd": 0.0,
+  "stopped_at_cost_cap": false
+}

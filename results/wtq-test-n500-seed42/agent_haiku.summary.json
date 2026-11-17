@@ -1,0 +1,99 @@
+{
+  "system": "agent_haiku",
+  "dataset": "wtq",
+  "split": "test",
+  "seed": 42,
+  "n": 500,
+  "correct": 431,
+  "accuracy": 0.862,
+  "errors": 1,
+  "no_answer": 1,
+  "latency_ms_p50": 5670.214850004413,
+  "latency_ms_p95": 8433.835415002977,
+  "cost_usd_per_1k": 0.48365730000000035,
+  "tokens": 2958573,
+  "cost_usd": 0.24182865000000017,
+  "stopped_at_cost_cap": false,
+  "config": {
+    "model": "claude-haiku-5-5",
+    "effort": "medium",
+    "max_steps": 6,
+    "max_output_tokens": 4096,
+    "max_question_tokens": 60000,
+    "samples": true,
+    "profile": false,
+    "check_answer": false,
+    "single_shot": false,
+    "system_prompt": "You answer questions about one table. The table is loaded into a DuckDB database as `t`, and the tools are your only access to it.\n\nHow to work\n- Look at the table first: call get_schema and sample_rows, which you can do in the same turn. Column names have been normalised to snake_case; get_schema also gives each column's original header text, which is often what the question refers to.\n- Work the answer out with run_sql. The sample is only the first few rows, so an answer read off the sample is usually wrong. If a query fails, read the error and fix the query.\n- The tables come from Wikipedia and are messy. A column is typed as a number only when every cell in it is a plain number. Otherwise it is text, and cells such as \"1,234\", \"3rd\", \"12 (4)\" or \"2004\u201305\" need string functions (replace, regexp_extract, try_cast) before they can be compared or added. Some tables end with a totals row that should not be counted as data.\n- `rowid` is each row's position on the page, starting at 0. Use it for questions about order, such as \"first\", \"last\", \"next\", \"previous\" or \"above\".\n\nGiving the answer\n- Call final_answer when you have the answer. Text you write is not read, so anything that is not in a final_answer call is lost.\n- Answer with the value itself, not a sentence: a name or date as its cell shows it, a count or calculation as a bare number.\n- If the question has several answers, pass each as its own item.\n- You have at most 6 turns for a question, so answer once you are confident rather than re-checking.\n",
+    "tools": [
+      {
+        "name": "get_schema",
+        "description": "Describe the table `t`: its row count and, for each column, the SQL name, the DuckDB type, and the original header text from the page. Call this first.",
+        "strict": true,
+        "input_schema": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        }
+      },
+      {
+        "name": "sample_rows",
+        "description": "Return the first rows of `t` so you can see what the values look like. At most 5 rows are returned.",
+        "strict": true,
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "n": {
+              "type": "integer",
+              "description": "How many rows, 1 to 5."
+            }
+          },
+          "required": [
+            "n"
+          ],
+          "additionalProperties": false
+        }
+      },
+      {
+        "name": "run_sql",
+        "description": "Run one read-only DuckDB SELECT statement against `t` and return the result. At most 30 rows come back; `truncated` says whether there were more. If the query fails, the error message is returned so you can fix it.",
+        "strict": true,
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "A single SELECT statement."
+            }
+          },
+          "required": [
+            "query"
+          ],
+          "additionalProperties": false
+        }
+      },
+      {
+        "name": "final_answer",
+        "description": "Give the final answer and finish. This is the only way to answer.",
+        "strict": true,
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "values": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The answer: one item, or several items for a list answer."
+            }
+          },
+          "required": [
+            "values"
+          ],
+          "additionalProperties": false
+        }
+      }
+    ]
+  }
+}
