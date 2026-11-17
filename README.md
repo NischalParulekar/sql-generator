@@ -429,6 +429,22 @@ docker compose up --build
 curl -s localhost:8000/ask -H 'content-type: application/json' \n  -d '{"question": "How many orders were placed in the South region?", "table_id": "orders-10k", "system": "rule_based"}'
 ```
 
+### The web UI
+
+The React UI in `frontend/` asks the service. Pick a sample table or upload a CSV, ask a
+question (or click one of the table's example questions), and each selected system's
+answer appears side by side with its latency, cost, whether it came from the cache, and
+how it got there: the rule engine's SQL, the cells and operator TAPAS chose, or each of
+the agent's turns with its queries, their results and the final answer.
+
+```bash
+docker compose up -d                        # the API on port 8000
+cd frontend && npm install && npm run dev   # the UI on http://localhost:3000
+```
+
+In development the UI proxies API calls to port 8000; a deployed build reads the API's
+address from `VITE_API_URL`.
+
 ### Load test
 
 [Locust](https://locust.io) drove the service with users sending questions back to back,
@@ -492,7 +508,7 @@ src/tableqa/
   service/              FastAPI app, Redis store, metrics, sample tables, settings
 loadtest/               Locust scenarios and the step runner
 ops/                    Prometheus config, Grafana provisioning and dashboard
-frontend/               React UI for the SQL generator (Vite)
+frontend/               React + Vite UI: compare the systems side by side, with traces
 results/                committed predictions and summaries
 tests/
 ```
@@ -520,17 +536,8 @@ test):
 - "orders from last 30 days" infers the table name `last`.
 - The prompt is lowercased, so string filters only match lowercase cell values.
 
-To run the original SQL-generator UI:
-
-```bash
-uv run --extra service uvicorn tableqa.service.app:app --port 8000
-```
-
-```bash
-cd frontend && npm install && npm run dev
-```
-
-The UI runs at `http://localhost:3000` and proxies `/generate-sql` to the API on port 8000.
+The service keeps the engine's original `POST /generate-sql` endpoint, which returns SQL
+for a prompt and an optional `CREATE TABLE` schema without running it.
 
 ## Data and license
 
