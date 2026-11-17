@@ -1,0 +1,90 @@
+[
+  {
+    "scenario": "CachedUser",
+    "users": 1,
+    "seconds": 30,
+    "requests": 4426,
+    "failures": 0,
+    "requests_per_s": 157.48724249116114,
+    "p50_ms": 5.0,
+    "p95_ms": 10.0,
+    "p99_ms": 25.0
+  },
+  {
+    "scenario": "CachedUser",
+    "users": 10,
+    "seconds": 30,
+    "requests": 10611,
+    "failures": 0,
+    "requests_per_s": 377.2549722170294,
+    "p50_ms": 21.0,
+    "p95_ms": 40.0,
+    "p99_ms": 61.0
+  },
+  {
+    "scenario": "CachedUser",
+    "users": 25,
+    "seconds": 30,
+    "requests": 11889,
+    "failures": 0,
+    "requests_per_s": 421.7049250499477,
+    "p50_ms": 48.0,
+    "p95_ms": 85.0,
+    "p99_ms": 120.0
+  },
+  {
+    "scenario": "CachedUser",
+    "users": 50,
+    "seconds": 30,
+    "requests": 13298,
+    "failures": 0,
+    "requests_per_s": 471.24971381787674,
+    "p50_ms": 88.0,
+    "p95_ms": 150.0,
+    "p99_ms": 250.0
+  },
+  {
+    "scenario": "UncachedUser",
+    "users": 1,
+    "seconds": 30,
+    "requests": 654,
+    "failures": 0,
+    "requests_per_s": 23.204109615728008,
+    "p50_ms": 36.0,
+    "p95_ms": 60.0,
+    "p99_ms": 89.0
+  },
+  {
+    "scenario": "UncachedUser",
+    "users": 10,
+    "seconds": 30,
+    "requests": 1393,
+    "failures": 0,
+    "requests_per_s": 49.40340824904558,
+    "p50_ms": 170.0,
+    "p95_ms": 300.0,
+    "p99_ms": 510.0
+  },
+  {
+    "scenario": "UncachedUser",
+    "users": 25,
+    "seconds": 30,
+    "requests": 1618,
+    "failures": 0,
+    "requests_per_s": 55.25367036306871,
+    "p50_ms": 400.0,
+    "p95_ms": 590.0,
+    "p99_ms": 2500.0
+  },
+  {
+    "scenario": "UncachedUser",
+    "users": 50,
+    "seconds": 30,
+    "requests": 1005,
+    "failures": 0,
+    "requests_per_s": 34.16076470312269,
+    "p50_ms": 1200.0,
+    "p95_ms": 2700.0,
+    "p99_ms": 3000.0
+  }
+]

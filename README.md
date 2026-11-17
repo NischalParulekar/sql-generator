@@ -429,6 +429,53 @@ docker compose up --build
 curl -s localhost:8000/ask -H 'content-type: application/json' \n  -d '{"question": "How many orders were placed in the South region?", "table_id": "orders-10k", "system": "rule_based"}'
 ```
 
+### Load test
+
+[Locust](https://locust.io) drove the service with users sending questions back to back,
+30 seconds per step, against the Docker Compose stack on the same laptop (8 logical
+CPUs, 7.6 GB RAM, Docker given 3.9 GB). Both scenarios use the rule-based system, so
+the test cost nothing:
+
+- **Cached:** the sample tables' example questions, answered once beforehand, so every
+  request is a Redis hit.
+- **Uncached:** a new question on every request, so every request loads the table into
+  a fresh DuckDB sandbox, generates SQL and runs it.
+
+Every response was checked: a miss in the cached scenario or a hit in the uncached one
+would count as a failure. The per-address rate limit was lifted for the run
+(`docker-compose.loadtest.yml`), since all requests come from one machine.
+
+| Scenario | Users | Requests/s | p50 | p95 | p99 | Failures |
+|---|---|---|---|---|---|---|
+| Cached | 1 | 157 | 5 ms | 10 ms | 25 ms | 0 of 4,426 |
+| Cached | 10 | 377 | 21 ms | 40 ms | 61 ms | 0 of 10,611 |
+| Cached | 25 | 422 | 48 ms | 85 ms | 120 ms | 0 of 11,889 |
+| Cached | 50 | 471 | 88 ms | 150 ms | 250 ms | 0 of 13,298 |
+| Uncached | 1 | 23 | 36 ms | 60 ms | 89 ms | 0 of 654 |
+| Uncached | 10 | 49 | 170 ms | 300 ms | 510 ms | 0 of 1,393 |
+| Uncached | 25 | 55 | 400 ms | 590 ms | 2,500 ms | 0 of 1,618 |
+| Uncached | 50 | 34 | 1,200 ms | 2,700 ms | 3,000 ms | 0 of 1,005 |
+
+- **The cache is worth about 8x in throughput.** At 25 users the service serves 422
+  cached answers a second at 85 ms p95, against 55 fresh ones at 590 ms.
+- **Fresh answers saturate at about 25 users.** Past that, throughput falls (34 a
+  second at 50 users) and p95 reaches 2.7 s: each fresh answer builds a DuckDB database
+  in a worker thread, and the threads, the load generator and Docker compete for the
+  same CPUs. Raising throughput would mean more API processes, not more threads.
+- **The agent was not load tested,** because every fresh answer costs money. Its
+  latency is set by the model API, about 4 to 6 seconds a question, and at most 8 run at
+  once, so it tops out near 1.5 fresh answers a second; a cached agent answer takes the
+  same path as the cached scenario above. That ceiling is worked out from the
+  concurrency limit, not measured.
+- These numbers are from one laptop with the load generator on the same machine; a
+  server would do better, and the ratios are the useful part.
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.loadtest.yml up -d
+uv run --group load python loadtest/run.py
+docker compose up -d   # restore the normal rate limit
+```
+
 ## Layout
 
 ```
@@ -443,6 +490,8 @@ src/tableqa/
   systems/llm_agent/    tools.py (the four tools) + system.py (prompt, loop, cost)
   eval/                 metrics.py, runner.py, compare.py, failures.py
   service/              FastAPI app, Redis store, metrics, sample tables, settings
+loadtest/               Locust scenarios and the step runner
+ops/                    Prometheus config, Grafana provisioning and dashboard
 frontend/               React UI for the SQL generator (Vite)
 results/                committed predictions and summaries
 tests/
