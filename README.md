@@ -13,8 +13,9 @@ sandbox, and answers are scored by denotation match on
 [WikiTableQuestions](https://github.com/ppasupat/WikiTableQuestions) (WTQ).
 
 **Status:** work in progress. All three systems have run on the dev subset and on the
-synthetic large-table test. Still to come: the held-out test split, the
-context-engineering variants, the failure taxonomy and the service.
+synthetic large-table test, and four context-engineering variants of the agent have
+been measured. Still to come: the held-out test split, the failure taxonomy and the
+service.
 
 ## Results so far
 
@@ -128,6 +129,63 @@ Correct answers out of 40, with median latency per question:
 ```bash
 uv run python -m tableqa.eval.runner --system rule_based --dataset synthetic --rows 100000
 uv run python -m tableqa.eval.runner --system agent_haiku --dataset synthetic --rows 100000 --max-cost 0.25
+```
+
+## Context-engineering variants
+
+Four variants of the agent, each changing one thing from the default, run on the same
+500 dev questions. The default agent was also run a second time, unchanged, to measure
+how much two identical runs differ.
+
+- **No samples** — no `sample_rows` tool; the model sees only the schema.
+- **Column profiles** — the schema also gives, for each column, how many cells are
+  filled, how many distinct values it has, its three most frequent values and, for a
+  number column, its range. WTQ has no human-written column descriptions, so this
+  automatic profile stands in for them.
+- **Check step** — the first `final_answer` is not accepted; the model is asked to check
+  its answer against the question and answer again.
+- **Single shot** — no loop: the model sees the schema and the first five rows and
+  writes one query, whose first column is the answer. No chance to repair it.
+
+Each run is compared question by question with the default: *fixed* counts questions
+the variant gets right and the default gets wrong, *broken* the reverse, and *p* is the
+two-sided exact sign test on that split.
+
+| Agent | Accuracy | vs default, first run | vs default, second run | Cost per 1k | Latency p50 |
+|---|---|---|---|---|---|
+| Default, first run | 87.0% (435) | — | 12 fixed / 8 broken, p = 0.50 | $0.47 | 4.0 s |
+| Default, second run | 86.2% (431) | 8 / 12, p = 0.50 | — | $0.48 | 5.3 s |
+| No samples | 84.6% (423) | 8 / 20, p = 0.04 | 14 / 22, p = 0.24 | $0.40 | 5.4 s |
+| Column profiles | 85.8% (429) | 9 / 15, p = 0.31 | 14 / 16, p = 0.86 | $0.52 | 5.2 s |
+| Check step | 86.2% (431) | 6 / 10, p = 0.45 | 10 / 10, p = 1.00 | $0.58 | 7.4 s |
+| Single shot | 78.4% (392) | 10 / 53, p < 0.0001 | 16 / 55, p < 0.0001 | $0.35 | 2.8 s |
+
+What the numbers say:
+
+- **The noise floor is about 20 questions.** Two runs of the identical agent disagree on
+  20 of the 500 (0.8 points of accuracy). Any variant has to beat that to mean anything.
+- **The tool loop is what matters.** Single shot loses 8 to 9 points, far beyond the
+  noise: looking at the table and repairing a query is worth more than any change to
+  what the model is told. It is the cheapest and fastest variant, so where speed matters
+  more than 8 points of accuracy it is a real option. 12 of its 500 queries failed to
+  run, with nothing to catch them.
+- **Nothing else made a measurable difference.** Column profiles and the check step are
+  within the noise, and both cost more: the check step about 20% more and two seconds
+  more per question. It changed only 12 of 500 answers (4 to right, 2 to wrong).
+- **Dropping the samples may cost one or two points.** It is significant against one
+  run of the default (p = 0.04) but not the other (p = 0.24), and with four variants
+  tested at once a single p = 0.04 is weak evidence. It saves about 15% of the cost.
+- **Conclusion: the default agent stays the final one.** No variant earned its change.
+
+Latency is comparable only among the five runs of the second batch, which ran at the
+same time; the default's first run ran alone and was faster. During the batch a short
+network outage on the test machine crashed 4 consecutive questions in every run.
+Those 20 questions were asked again with `--retry-crashed` (a crash is a failure of the
+run, not an answer), and every other answer was kept as it was. The batch cost $1.16.
+
+```bash
+uv run python -m tableqa.eval.runner --system agent_haiku_single_shot --split dev --n 500 --seed 42 --max-cost 0.50
+uv run python -m tableqa.eval.compare results/wtq-dev-n500-seed42/agent_haiku.predictions.jsonl results/wtq-dev-n500-seed42/agent_haiku_single_shot.predictions.jsonl
 ```
 
 ## Reproduce
