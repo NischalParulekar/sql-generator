@@ -13,9 +13,9 @@ sandbox, and answers are scored by denotation match on
 [WikiTableQuestions](https://github.com/ppasupat/WikiTableQuestions) (WTQ).
 
 **Status:** work in progress. All three systems have been measured on the held-out test
-split, the dev subset and a synthetic large-table test, and four context-engineering
-variants of the agent have been compared. Still to come: the failure taxonomy and the
-service.
+split, the dev subset and a synthetic large-table test; four context-engineering
+variants of the agent have been compared; and 169 test failures have been labelled by
+cause. Still to come: the service and demo.
 
 ## Results
 
@@ -212,6 +212,61 @@ uv run python -m tableqa.eval.runner --system agent_haiku_single_shot --split de
 uv run python -m tableqa.eval.compare results/wtq-dev-n500-seed42/agent_haiku.predictions.jsonl results/wtq-dev-n500-seed42/agent_haiku_single_shot.predictions.jsonl
 ```
 
+## Failure analysis
+
+Why does each system get questions wrong? Failures on the held-out test subset were
+labelled by cause: all 69 of the agent's, and a seeded random 50 each from the
+rule-based system (of 475) and TAPAS, truncated (of 271).
+
+Each failure gets one primary label from a fixed list of eleven causes, checked in a
+fixed order; the first that applies is the label. A questionable gold answer comes
+first, because if the gold answer is wrong nothing the system did is the cause.
+
+| Cause | Claude agent (69) | TAPAS (50) | Rule-based (50) |
+|---|---|---|---|
+| Gold questionable: gold wrong, ill-posed, or not answerable from the table | **21** | 1 | 1 |
+| Execution error: the query failed or the budget ran out | 1 | — | 4 |
+| Declined: said the table cannot answer it | 2 | — | — |
+| Not understood: output unrelated to the question | — | 2 | **23** |
+| Missing context: needed rows or page content it never saw | 1 | 10 | — |
+| Answer form: right value, wrong form | **15** | 1 | — |
+| Misread question: answered a different question | 7 | 1 | **20** |
+| Wrong column | 2 | 2 | — |
+| Wrong rows: wrong filter, position, or list items | 11 | **24** | 1 |
+| Wrong calculation: arithmetic, dates, distinct counts | 8 | 9 | 1 |
+| Hallucinated value: not in the table or derivable from it | 1 | — | — |
+
+What it shows:
+
+- **Half of the agent's failures are not reasoning errors.** 21 are problems with the
+  benchmark itself: gold answers that the table contradicts (it lists Honda 14 times;
+  gold says 13), answers relative to the year the question was written ("how many
+  years ago..."), and questions the table cannot answer, where the agent correctly said
+  so. Another 15 have the right value in a form the strict metric rejects: "7" for
+  "7 days", "Hofmann" for "Alex Hofmann", "$1.2 billion" without the dollar sign.
+- **The agent's real errors are selection and arithmetic on messy text.** Wrong rows
+  (11), calculations over date ranges ending in "present" or unusual score formats (8),
+  and misreading what is being counted (7). It hallucinated once: it guessed players'
+  nationalities, which the table does not contain.
+- **TAPAS's failures are built into its design.** It selects wrong rows (24), cannot see
+  rows dropped to fit its window (10), and has no operator for a difference, a maximum,
+  a most-frequent value or a yes/no answer (9 calculations, 2 not understood).
+- **The rule-based engine mostly never engages.** 43 of 50 failures are its
+  `SELECT *` fallback or a `COUNT(*)` that ignores the question's condition.
+- **The benchmark has a ceiling below 100%.** At least 21 of the 500 test answers (4%)
+  are questionable, and they were found only by looking at the agent's failures; gold
+  errors among answers counted as correct were not looked for. Setting those 21 aside,
+  the agent answers 431 of the remaining 479 (90.0%). The 86.2% stays the headline
+  because it is measured the same way for every system.
+
+**How the labels were made.** The categories were fixed before labelling. Claude wrote a
+first-pass label and a note for every failure, checking the uncertain ones against the
+table itself. The author then reviewed all 169 on a review page showing the question,
+gold answer, prediction and the system's SQL or selected cells, and agreed with every
+first-pass label; none was changed. The labels and notes are in
+[`results/failures/reviewed.csv`](results/failures/reviewed.csv), and
+`python -m tableqa.eval.failures tally` recounts them.
+
 ## Reproduce
 
 Requires [uv](https://docs.astral.sh/uv/) (it installs Python 3.11 and the pinned
@@ -343,7 +398,7 @@ src/tableqa/
   systems/rule_based/   nlp_sql.py (the engine) + system.py (adapter)
   systems/tapas/        logic.py (chunk packing, answer computation) + system.py (model)
   systems/llm_agent/    tools.py (the four tools) + system.py (prompt, loop, cost)
-  eval/                 metrics.py, runner.py
+  eval/                 metrics.py, runner.py, compare.py, failures.py
   service/app.py        FastAPI app (currently only POST /generate-sql)
 frontend/               React UI for the SQL generator (Vite)
 results/                committed predictions and summaries
