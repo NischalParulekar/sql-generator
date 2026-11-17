@@ -143,9 +143,11 @@ def create_app(
         )
 
     def client_of(request: Request) -> str:
-        forwarded = request.headers.get("x-forwarded-for")
-        if settings.trust_proxy and forwarded:
-            return forwarded.split(",")[0].strip()
+        hops = settings.proxy_hops
+        forwarded = [a.strip() for a in request.headers.get("x-forwarded-for", "").split(",")]
+        forwarded = [a for a in forwarded if a]
+        if hops and len(forwarded) >= hops:
+            return forwarded[-hops]
         return request.client.host if request.client else "unknown"
 
     async def table_for(app_state, table_id: str) -> tuple[Table, str, str]:

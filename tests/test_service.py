@@ -126,13 +126,34 @@ def test_rate_limit_charges_fresh_answers_their_weight_and_cached_ones_one():
 
 
 def test_rate_limits_are_per_client_address_behind_a_trusted_proxy():
-    settings = Settings(rate_capacity=1, rate_refill_per_s=0.001, trust_proxy=True)
+    settings = Settings(rate_capacity=1, rate_refill_per_s=0.001, proxy_hops=1)
     client, _ = make(settings)
     with client:
         a = ask(client, "q1", headers={"x-forwarded-for": "1.1.1.1"})
         a_again = ask(client, "q2", headers={"x-forwarded-for": "1.1.1.1"})
-        b = ask(client, "q2", headers={"x-forwarded-for": "2.2.2.2, 10.0.0.1"})
+        b = ask(client, "q2", headers={"x-forwarded-for": "2.2.2.2"})
     assert (a.status_code, a_again.status_code, b.status_code) == (200, 429, 200)
+
+
+def test_a_client_cannot_dodge_the_rate_limit_by_forging_forwarded_for():
+    settings = Settings(rate_capacity=1, rate_refill_per_s=0.001, proxy_hops=1)
+    client, _ = make(settings)
+    with client:
+        # The proxy appends the real address (3.3.3.3); the forged entries come first.
+        codes = [
+            ask(client, f"q{i}", headers={"x-forwarded-for": f"9.9.9.{i}, 3.3.3.3"}).status_code
+            for i in range(3)
+        ]
+    assert codes == [200, 429, 429]
+
+
+def test_forwarded_for_is_ignored_unless_proxies_are_trusted():
+    settings = Settings(rate_capacity=1, rate_refill_per_s=0.001)
+    client, _ = make(settings)
+    with client:
+        a = ask(client, "q1", headers={"x-forwarded-for": "1.1.1.1"})
+        b = ask(client, "q2", headers={"x-forwarded-for": "2.2.2.2"})
+    assert (a.status_code, b.status_code) == (200, 429)
 
 
 def test_daily_spend_cap_stops_the_agent_but_not_free_systems():
