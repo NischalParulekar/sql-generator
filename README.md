@@ -386,6 +386,49 @@ are disabled and the configuration is locked, queries are interrupted after a ti
 (5 s by default), and results are capped. See
 [`src/tableqa/execution/sandbox.py`](src/tableqa/execution/sandbox.py) and its tests.
 
+## The service
+
+The three systems are also served over HTTP, so they can be compared live and load
+tested. `docker compose up --build` starts the API with Redis, Prometheus and Grafana,
+every port bound to this machine only.
+
+| Endpoint | What it does |
+|---|---|
+| `POST /ask` | Answer `{question, table_id, system}` with one system |
+| `GET /tables` | Sample tables with example questions: ten WTQ dev tables and a generated 10,000-row order table |
+| `POST /tables` | Upload a CSV (2 MB, 50,000 rows and 60 columns at most), kept for a week |
+| `GET /tables/{id}/schema` | Columns, types and first rows |
+| `GET /systems`, `GET /healthz`, `GET /metrics` | Systems on offer, health, Prometheus metrics |
+
+- **Answer cache.** Answers are cached in Redis for a week, keyed by system, a hash of
+  the table's content and the question normalised for case, spacing and trailing
+  punctuation. A cached answer is returned without running the system.
+- **Rate limiting.** Each client address has a token bucket in Redis, updated
+  atomically by a Lua script: 20 tokens, refilled at one every five seconds. A fresh
+  answer costs its system's weight (rule-based 1, TAPAS 3, agent 5), a cached one 1.
+  Over the limit the API returns 429 with `Retry-After`.
+- **Spend cap.** LLM spend is added up per UTC day in Redis; at the cap
+  (`DAILY_SPEND_CAP_USD`, $0.50 in the Compose file) the agent is refused with 503
+  while the free systems keep working. Concurrent requests can overshoot the cap by
+  at most a few in-flight questions, each costing well under a cent. Redis runs with
+  `noeviction`, so memory pressure cannot reset the counter.
+- **Isolation.** Systems run in worker threads with a per-system concurrency limit
+  (TAPAS one at a time) and a 90-second timeout. A system that fails returns 502
+  without its error details; a Redis outage returns 503.
+- **Metrics.** Questions by system and outcome (answered, cached, failed, rate limited,
+  spend capped), latency by system and cache, LLM tokens and cost, today's spend,
+  sandbox errors by kind, and uploads. The Grafana dashboard in
+  `ops/grafana/dashboards/tableqa.json` is provisioned automatically
+  (http://localhost:3001).
+- **Secrets.** The API key is read from the git-ignored `.env` and never leaves the
+  server; TAPAS is left out of the image by default because it adds PyTorch and a
+  443 MB model.
+
+```bash
+docker compose up --build
+curl -s localhost:8000/ask -H 'content-type: application/json' \n  -d '{"question": "How many orders were placed in the South region?", "table_id": "orders-10k", "system": "rule_based"}'
+```
+
 ## Layout
 
 ```
@@ -399,7 +442,7 @@ src/tableqa/
   systems/tapas/        logic.py (chunk packing, answer computation) + system.py (model)
   systems/llm_agent/    tools.py (the four tools) + system.py (prompt, loop, cost)
   eval/                 metrics.py, runner.py, compare.py, failures.py
-  service/app.py        FastAPI app (currently only POST /generate-sql)
+  service/              FastAPI app, Redis store, metrics, sample tables, settings
 frontend/               React UI for the SQL generator (Vite)
 results/                committed predictions and summaries
 tests/
