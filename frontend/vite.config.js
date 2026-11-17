@@ -6,6 +6,8 @@ import { defineConfig } from 'vite';
 const api = 'http://localhost:8000';
 
 export default defineConfig({
+  // GitHub Pages serves the site under /<repository>/; the Pages workflow sets VITE_BASE.
+  base: process.env.VITE_BASE || '/',
   plugins: [react()],
   server: {
     port: 3000,
