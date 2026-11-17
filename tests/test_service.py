@@ -160,7 +160,7 @@ def test_a_failing_system_is_a_502_without_details_and_is_not_cached():
 
 
 def test_upload_a_csv_and_ask_about_it():
-    client, systems = make()
+    client, _ = make()
     csv_bytes = b"City,Population\nAnn Arbor,123000\nBoston,650000\n"
     with client:
         r = client.post("/tables", files={"file": ("cities.csv", csv_bytes, "text/csv")})
