@@ -28,6 +28,8 @@ async function request(path, options) {
 // The static site has no service behind it: it replays answers recorded during the
 // benchmark runs, from demo.json (built by scripts/build_demo.py).
 export const RECORDED = import.meta.env.VITE_RECORDED === '1';
+// Address of the other build (live <-> recorded) when both are published.
+export const OTHER_URL = import.meta.env.VITE_OTHER_URL || '';
 let bundle = null;
 async function demo() {
   if (!bundle) {

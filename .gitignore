@@ -19,6 +19,7 @@ build/
 # React / Node
 node_modules/
 frontend/dist/
+frontend/dist-live/
 npm-debug.log*
 
 # OS

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { RECORDED, ask, getSchema, getSystems, getTables, uploadTable } from './api';
+import { OTHER_URL, RECORDED, ask, getSchema, getSystems, getTables, uploadTable } from './api';
 import ResultCard from './ResultCard';
 import TablePreview from './TablePreview';
 
@@ -105,8 +105,19 @@ export default function App() {
         <p className="recorded">
           This page replays answers recorded during the benchmark runs, so it needs no server and
           costs nothing to visit. Pick a table and one of its example questions; each system's
-          answer is exactly what it gave in the run, right or wrong. To ask your own questions or
-          upload a table, run the service from the repository.
+          answer is exactly what it gave in the run, right or wrong.{' '}
+          {OTHER_URL ? (
+            <>To ask your own questions or upload a table, <a href={OTHER_URL}>try the live version</a>.</>
+          ) : (
+            'To ask your own questions or upload a table, run the service from the repository.'
+          )}
+        </p>
+      )}
+      {!RECORDED && OTHER_URL && (
+        <p className="recorded">
+          This page talks to a live API on a free server that sleeps when idle, so the first
+          question can take about a minute. The Claude agent is rate limited and has a small daily
+          budget; when it runs out, <a href={OTHER_URL}>the recorded demo</a> still works.
         </p>
       )}
       {notice && <p className="notice" role="alert">{notice}</p>}

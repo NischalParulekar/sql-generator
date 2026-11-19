@@ -1,7 +1,8 @@
-# Publishes the UI to GitHub Pages. With no API_URL repository variable it builds the
-# recorded demo, which replays frontend/public/demo.json and needs no server or key.
-# Set the repository variable API_URL to a deployed API's address (for example the
-# Render service from render.yaml) and it builds the live UI instead.
+# Publishes the UI to GitHub Pages. The site root is always the recorded demo, which
+# replays frontend/public/demo.json and needs no server or key. If the repository
+# variable API_URL holds a deployed API's address (for example the Render service from
+# render.yaml), a live build that talks to that API is published under live/ as well,
+# and the two link to each other.
 name: Pages
 
 on:
@@ -29,15 +30,26 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-      - name: Build the UI (recorded unless API_URL is set)
+      - run: npm ci
+        working-directory: frontend
+      - name: Build the live UI (only when API_URL is set)
+        if: vars.API_URL != ''
         working-directory: frontend
         env:
-          VITE_RECORDED: ${{ vars.API_URL == '' && '1' || '0' }}
+          VITE_RECORDED: '0'
           VITE_API_URL: ${{ vars.API_URL }}
+          VITE_BASE: /${{ github.event.repository.name }}/live/
+          VITE_OTHER_URL: /${{ github.event.repository.name }}/
+        run: npm run build -- --outDir dist-live
+      - name: Build the recorded demo
+        working-directory: frontend
+        env:
+          VITE_RECORDED: '1'
           VITE_BASE: /${{ github.event.repository.name }}/
+          VITE_OTHER_URL: ${{ vars.API_URL != '' && format('/{0}/live/', github.event.repository.name) || '' }}
         run: |
-          npm ci
           npm run build
+          if [ -d dist-live ]; then rm -f dist-live/demo.json; mv dist-live dist/live; fi
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
         with:
