@@ -13,8 +13,10 @@ sandbox, and answers are scored by denotation match on
 [WikiTableQuestions](https://github.com/ppasupat/WikiTableQuestions) (WTQ).
 
 **Demo:** https://nischalparulekar.github.io/tableqa/ replays each system's recorded
-answers and traces; nothing to install, no cost. The live API runs locally with
-`docker compose up` and deploys to Render's free tier (see [Deployment](#deployment)).
+answers and traces; nothing to install, no cost. **Live:**
+https://nischalparulekar.github.io/tableqa/live/ asks the deployed API (Render free
+tier, so the first question after a quiet spell takes about a minute) and accepts your
+own questions and CSV uploads. See [Deployment](#deployment).
 
 **In short (held-out test split, 500 questions):** the Claude agent answers 86.2%, TAPAS
 46.0% at best and the rule-based engine 5.0%, for $0.48 per 1,000 questions. Half of the
@@ -467,24 +469,28 @@ address from `VITE_API_URL`.
 
 ### Deployment
 
-**Recorded demo (live now, free).** GitHub Pages serves the UI at
+**Recorded demo (free).** GitHub Pages serves the UI at
 https://nischalparulekar.github.io/tableqa/ in replay mode: it shows the answers and
 traces each system gave in the committed benchmark runs, for eight WTQ dev tables and the
 100,000-row generated table, right or wrong. It needs no server and no API key. The
 `Pages` workflow rebuilds it whenever the frontend changes; `scripts/build_demo.py`
 rebuilds the bundle it replays.
 
-**Live API (free, one-time setup).** `render.yaml` is a Render Blueprint for the API and
-a Redis-compatible Key Value instance, both on Render's free plan:
+**Live API (free).** The API runs at https://tableqa-api.onrender.com (rule-based and
+Claude agent; TAPAS is left out because PyTorch and its model need more than the free
+instance's 512 MB of memory), and https://nischalparulekar.github.io/tableqa/live/ is the
+UI pointed at it. `render.yaml` is the Render Blueprint for the API and a Redis-compatible
+Key Value instance, both on Render's free plan. To deploy your own copy:
 
 1. In Render, choose New, then Blueprint, and pick this repository. Render asks for
    `ANTHROPIC_API_KEY`; use a key made for this service, with a monthly spend limit set
    in the Anthropic Console. That limit is the hard ceiling: the free Key Value instance
    keeps no data across restarts, which resets the service's own daily counter.
 2. When the deploy finishes, open `https://<service>.onrender.com/healthz`.
-3. In this repository's settings, add the Actions variable `API_URL` with the service's
-   address and re-run the `Pages` workflow. The site then calls the live API instead of
-   replaying recordings.
+3. In the repository's settings, add the Actions variable `API_URL` with the service's
+   address and re-run the `Pages` workflow. The site root stays the recorded demo, and a
+   live build that calls the API is published under `live/`; the two link to each
+   other.
 
 The free web service sleeps after 15 minutes without traffic and takes about a minute to
 wake, so the first question after a quiet spell is slow. The service's own guards still
