@@ -300,3 +300,19 @@ def test_every_series_starts_at_zero_so_rates_see_the_first_events():
         assert f'tableqa_ask_latency_seconds_count{{cache="hit",system="{system}"}} 0.0' in text
         assert f'tableqa_llm_tokens_total{{system="{system}"}} 0.0' in text
     assert 'tableqa_table_uploads_total{outcome="stored"} 0.0' in text
+
+
+def test_a_header_set_by_the_edge_proxy_takes_precedence():
+    settings = Settings(
+        rate_capacity=1, rate_refill_per_s=0.001, client_ip_header="cf-connecting-ip", proxy_hops=1
+    )
+    client, _ = make(settings)
+    with client:
+        same = {"cf-connecting-ip": "5.5.5.5"}
+        a = ask(client, "q1", headers={**same, "x-forwarded-for": "1.1.1.1"})
+        a_again = ask(client, "q2", headers={**same, "x-forwarded-for": "2.2.2.2"})
+        b = ask(client, "q3", headers={"cf-connecting-ip": "6.6.6.6"})
+        info = client.get("/client", headers={"cf-connecting-ip": "7.7.7.7"}).json()
+    assert (a.status_code, a_again.status_code, b.status_code) == (200, 429, 200)
+    assert info["rate_limit_key"] == "7.7.7.7"
+    assert info["cf_connecting_ip"] == "7.7.7.7"
