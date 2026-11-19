@@ -143,6 +143,10 @@ def create_app(
         )
 
     def client_of(request: Request) -> str:
+        if settings.client_ip_header:
+            value = request.headers.get(settings.client_ip_header, "").strip()
+            if value:
+                return value
         hops = settings.proxy_hops
         forwarded = [a.strip() for a in request.headers.get("x-forwarded-for", "").split(",")]
         forwarded = [a for a in forwarded if a]
@@ -183,6 +187,21 @@ def create_app(
             ],
             "first_rows": [list(row) for row in table.raw_rows[:5]],
             "example_questions": questions,
+        }
+
+    @app.get("/client")
+    async def client_address(request: Request):
+        """How the service identifies the caller for rate limiting, with the headers it
+        could use, so the proxy settings can be checked on a real deployment. Everything
+        returned describes the caller's own request."""
+        headers = request.headers
+        return {
+            "rate_limit_key": client_of(request),
+            "remote_address": request.client.host if request.client else None,
+            "x_forwarded_for": headers.get("x-forwarded-for"),
+            "cf_connecting_ip": headers.get("cf-connecting-ip"),
+            "true_client_ip": headers.get("true-client-ip"),
+            "x_real_ip": headers.get("x-real-ip"),
         }
 
     @app.get("/healthz")

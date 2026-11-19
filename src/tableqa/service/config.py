@@ -19,6 +19,9 @@ class Settings:
     # the right; entries further left were written by the client and can be forged.
     # 0 ignores the header and uses the connecting address.
     proxy_hops: int = 0
+    # A header the edge proxy sets to the client's address and overwrites if the client
+    # sent one, such as Cloudflare's CF-Connecting-IP. Takes precedence over proxy_hops.
+    client_ip_header: str = ""
 
     max_question_chars: int = 500
     max_upload_bytes: int = 2_000_000
@@ -52,6 +55,7 @@ class Settings:
             systems=_list("TABLEQA_SYSTEMS", "rule_based,agent_haiku"),
             cors_origins=_list("CORS_ORIGINS", "http://localhost:3000"),
             proxy_hops=int(env("PROXY_HOPS", "0")),
+            client_ip_header=env("CLIENT_IP_HEADER", ""),
             daily_spend_cap_usd=float(env("DAILY_SPEND_CAP_USD", cls.daily_spend_cap_usd)),
             rate_capacity=float(env("RATE_CAPACITY", cls.rate_capacity)),
             rate_refill_per_s=float(env("RATE_REFILL_PER_S", cls.rate_refill_per_s)),
