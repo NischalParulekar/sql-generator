@@ -25,10 +25,12 @@ services:
         value: "0.50"
       - key: CORS_ORIGINS
         value: https://nischalparulekar.github.io
-      # Render's load balancer appends the client's address to X-Forwarded-For. Check
-      # one request's header after deploying; if another proxy sits in front, raise this.
-      - key: PROXY_HOPS
-        value: "1"
+      # Requests arrive through Cloudflare and then Render's load balancer, which adds
+      # its own changing internal address to X-Forwarded-For. Cloudflare sets
+      # CF-Connecting-IP to the client's address and refuses requests that try to send
+      # one, so rate limits key on that. GET /client shows what the service sees.
+      - key: CLIENT_IP_HEADER
+        value: cf-connecting-ip
       - key: ANTHROPIC_API_KEY
         sync: false
 

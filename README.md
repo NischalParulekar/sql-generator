@@ -489,9 +489,12 @@ a Redis-compatible Key Value instance, both on Render's free plan:
 The free web service sleeps after 15 minutes without traffic and takes about a minute to
 wake, so the first question after a quiet spell is slow. The service's own guards still
 apply: $0.50 a day of agent spend, per-address rate limits, and cached answers served
-free. Behind Render's proxy the client address is read from `X-Forwarded-For` with
-`PROXY_HOPS=1`, so a client cannot dodge the rate limit by writing its own header;
-check one request's header after deploying in case Render adds another hop.
+free. On Render, requests pass through Cloudflare and then Render's load balancer, which
+adds its own internal address, different on each request, to `X-Forwarded-For`; keying
+the rate limit on that gave every request a fresh bucket. The Blueprint therefore sets
+`CLIENT_IP_HEADER=cf-connecting-ip`: Cloudflare writes that header itself and refuses
+requests that try to supply one. `GET /client` shows how the service identifies the
+caller, to check this on any new host.
 
 ### Load test
 
